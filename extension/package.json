@@ -11,9 +11,14 @@
     "package": "plasmo package"
   },
   "dependencies": {
+    "class-variance-authority": "^0.4.0",
+    "clsx": "^1.2.1",
+    "lucide-react": "^0.126.0",
     "plasmo": "0.64.5",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "tailwind-merge": "^1.10.0",
+    "tailwindcss-animate": "^1.0.5"
   },
   "devDependencies": {
     "@plasmohq/prettier-plugin-sort-imports": "3.6.3",
