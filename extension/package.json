@@ -13,6 +13,7 @@
   "dependencies": {
     "class-variance-authority": "^0.4.0",
     "clsx": "^1.2.1",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.126.0",
     "plasmo": "0.64.5",
     "react": "18.2.0",
@@ -34,7 +35,13 @@
   },
   "manifest": {
     "host_permissions": [
-      "https://*/*"
+      "https://twitter.com/*"
+    ],
+    "permissions": [
+      "alarms",
+      "scripting",
+      "webRequest",
+      "tabs"
     ]
   }
 }
