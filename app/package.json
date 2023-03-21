@@ -1,0 +1,71 @@
+{
+    "name": "app",
+    "version": "1.0.0",
+    "scripts": {
+        "dev": "electron-esbuild dev",
+        "build": "electron-esbuild build",
+        "ts-node": "ts-node --project tsconfig.json",
+        "package": "electron-builder"
+    },
+    "devDependencies": {
+        "@types/lodash": "^4.14.191",
+        "@types/node": "^16.18.18",
+        "@types/react": "18.x",
+        "@types/react-dom": "18.x",
+        "electron": "22.x",
+        "electron-builder": "23.x",
+        "electron-esbuild": "^7.0.0",
+        "electron-util": "0.17.x",
+        "esbuild": "0.16.x",
+        "react": "18.x",
+        "react-dom": "18.x",
+        "ts-node": "^10.9.1",
+        "tslib": "^2.5.0",
+        "typescript": "4.9.x"
+    },
+    "build": {
+        "appId": "io.comp.myapp",
+        "productName": "app",
+        "extraMetadata": {
+            "name": "app",
+            "main": "main.js"
+        },
+        "files": [
+            {
+                "from": ".",
+                "filter": [
+                    "package.json"
+                ]
+            },
+            {
+                "from": "dist/main"
+            },
+            {
+                "from": "dist/renderer"
+            }
+        ],
+        "win": {
+            "target": [
+                "zip"
+            ]
+        },
+        "mac": {
+            "target": [
+                "zip"
+            ]
+        },
+        "linux": {
+            "target": [
+                "zip"
+            ]
+        },
+        "directories": {
+            "buildResources": "resources"
+        },
+        "publish": null
+    },
+    "dependencies": {
+        "invariant": "^2.2.4",
+        "lodash": "^4.17.21"
+    }
+}
