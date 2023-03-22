@@ -65,7 +65,7 @@
         "publish": null
     },
     "dependencies": {
-        "invariant": "^2.2.4",
-        "lodash": "^4.17.21"
+        "lodash": "^4.17.21",
+        "ts-invariant": "^0.10.3"
     }
 }
