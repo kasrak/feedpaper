@@ -1,3 +1,7 @@
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
 export interface Env {
     // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
     // MY_KV_NAMESPACE: KVNamespace;
@@ -18,6 +22,13 @@ export default {
         env: Env,
         ctx: ExecutionContext,
     ): Promise<Response> {
+        await prisma.log.create({
+            data: {
+                message: "Hello World! " + new Date(),
+                meta: {},
+            },
+        });
+
         return new Response("Hello World!");
     },
 };
