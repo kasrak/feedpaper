@@ -13,7 +13,7 @@ client.connect((err) => {
 });
 
 async function query(sql, params) {
-    console.log("query: ", sql, params);
+    // console.log("query: ", sql, params);
     return client.query(sql, params);
 }
 
