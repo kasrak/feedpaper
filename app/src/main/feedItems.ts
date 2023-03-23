@@ -1,6 +1,7 @@
 import util from "util";
 import terminate from "./terminate";
 import { getTweetsFromInstructions } from "./twitterUtils";
+import fetch from "node-fetch";
 
 // https://chromedevtools.github.io/devtools-protocol/tot/Network/#type-Response
 type Response = {
@@ -30,13 +31,13 @@ export function shouldWatchRequest(request: ResponseReceivedParams) {
     );
 }
 
-export function getFeedItemsFromResponse(
+export async function getFeedItemsFromResponse(
     request: ResponseReceivedParams,
     response: {
         base64Encoded: boolean;
         body: string;
     },
-): Array<FeedItem> {
+): Promise<Array<FeedItem>> {
     if (response.base64Encoded) {
         terminate("Response body is unexpectedly base64 encoded");
     }
@@ -46,20 +47,39 @@ export function getFeedItemsFromResponse(
         bodyParsed.data.home.home_timeline_urt.instructions,
     );
 
-    tweets = tweets.filter((tweet) => {
-        return (
-            // Remove self_replies
-            (!tweet.self_thread || tweet.self_thread.id_str === tweet.id) &&
-            // Remove promoted tweets
-            !tweet._isPromoted
-        );
+    const res = await fetch("http://0.0.0.0:8888", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            cmd: "saveTweets",
+            args: {
+                tweets,
+            },
+        }),
     });
 
-    for (const tweet of tweets) {
-        if (tweet.quoted_tweet) {
-            console.log(util.inspect(tweet, { depth: 10 }));
-        }
+    if (res.ok) {
+        console.log(`Saved ${tweets.length} tweets`);
+    } else {
+        console.error("Failed to save tweets:", res.status, res.statusText);
     }
+
+    // tweets = tweets.filter((tweet) => {
+    //     return (
+    //         // Remove self_replies
+    //         (!tweet.self_thread || tweet.self_thread.id_str === tweet.id) &&
+    //         // Remove promoted tweets
+    //         !tweet._isPromoted
+    //     );
+    // });
+
+    // for (const tweet of tweets) {
+    //     if (tweet.quoted_tweet) {
+    //         console.log(util.inspect(tweet, { depth: 10 }));
+    //     }
+    // }
 
     return [];
 }

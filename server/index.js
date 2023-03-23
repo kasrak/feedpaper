@@ -16,42 +16,64 @@ client.connect((err) => {
 const hostname = "0.0.0.0";
 const port = 8888;
 
+async function query(sql, params) {
+    console.log("query: ", sql, params);
+    return client.query(sql, params);
+}
+
+async function getBodyJson(req) {
+    return new Promise((resolve, reject) => {
+        let body = "";
+        req.on("data", (chunk) => {
+            body += chunk.toString(); // convert Buffer to string
+        });
+        req.on("end", () => {
+            resolve(JSON.parse(body));
+        });
+    });
+}
+
+async function getExistingTweetIds() {
+    const result = await query("SELECT DISTINCT(tweet_id) FROM items");
+    const existingTweetIds = new Set(result.rows.map((row) => row.tweet_id));
+    return existingTweetIds;
+}
+
+function respondJson(res, statusCode, data) {
+    res.statusCode = statusCode;
+    res.setHeader("Content-Type", "text/json");
+    res.end(JSON.stringify(data, null, 2));
+}
+
 const server = http.createServer(async (req, res) => {
-    // if (req.method === "POST") {
-    //     let body = "";
-    //     req.on("data", (chunk) => {
-    //         body += chunk.toString(); // convert Buffer to string
-    //     });
-    //     req.on("end", () => {
-    //         client.query(
-    //             "INSERT INTO feedpaper (url, title, description, image, date) VALUES ($1, $2, $3, $4, $5)",
-    //             [
-    //                 body.url,
-    //                 body.title,
-    //                 body.description,
-    //                 body.image,
-    //                 body.date,
-    //             ],
-    //             (err, res) => {
-    //                 if (err) {
-    //                     console.log(err.stack);
-    //                 } else {
-    //                     console.log(res.rows[0]);
-    //                 }
-    //             }
-    //         );
-    //     });
-    // }
-
-    console.log("INSERT");
-    await client.query(
-        "INSERT INTO items (tweet_id, created_at, content) VALUES ($1, $2, $3)",
-        ["123", new Date().toISOString(), '{"test": true}'],
-    );
-
-    res.statusCode = 200;
-    res.setHeader("Content-Type", "text/plain");
-    res.end("Hello World");
+    if (req.method === "POST") {
+        const body = await getBodyJson(req);
+        switch (body.cmd) {
+            case "saveTweets": {
+                const existingTweetIds = await getExistingTweetIds();
+                const { tweets } = body.args;
+                for (const tweet of tweets) {
+                    if (existingTweetIds.has(tweet.id)) {
+                        console.log("skipping", tweet.id);
+                        continue;
+                    }
+                    // TODO: batch this insertion
+                    await query(
+                        "INSERT INTO items (tweet_id, created_at, content) VALUES ($1, $2, $3)",
+                        [tweet.id, tweet.created_at, JSON.stringify(tweet)],
+                    );
+                }
+                respondJson(res, 200, { ok: true });
+                break;
+            }
+            default:
+                respondJson(res, 400, { error: "Bad cmd" });
+        }
+    } else {
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "text/plain");
+        res.end("Hello World");
+    }
 });
 
 server.listen(port, hostname, () => {

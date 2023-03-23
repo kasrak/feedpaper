@@ -5,6 +5,7 @@
     "main": "index.js",
     "scripts": {
         "build": "echo 'building!'",
+        "dev": "nodemon index.js",
         "start": "node index.js"
     },
     "repository": {
@@ -18,7 +19,8 @@
     },
     "homepage": "https://github.com/kasrak/feedpaper#readme",
     "devDependencies": {
-        "@types/pg": "^8.6.6"
+        "@types/pg": "^8.6.6",
+        "nodemon": "^2.0.22"
     },
     "dependencies": {
         "node-postgres": "^0.6.2",
