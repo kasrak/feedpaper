@@ -16,5 +16,12 @@
     "bugs": {
         "url": "https://github.com/kasrak/feedpaper/issues"
     },
-    "homepage": "https://github.com/kasrak/feedpaper#readme"
+    "homepage": "https://github.com/kasrak/feedpaper#readme",
+    "devDependencies": {
+        "@types/pg": "^8.6.6"
+    },
+    "dependencies": {
+        "node-postgres": "^0.6.2",
+        "pg": "^8.10.0"
+    }
 }
