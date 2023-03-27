@@ -29,6 +29,9 @@ function respondJson(res, statusCode, data) {
 }
 
 const server = http.createServer(async (req, res) => {
+    // Allow CORS
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
     if (req.method === "POST") {
         const body = await getBodyJson(req);
         switch (body.cmd) {
@@ -52,9 +55,18 @@ const server = http.createServer(async (req, res) => {
                 respondJson(res, 400, { error: "Bad cmd" });
         }
     } else {
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "text/plain");
-        res.end("Hello World");
+        const url = new URL(req.url, "http://localhost:8888");
+        switch (url.pathname) {
+            case "/getItems": {
+                const items = await query(
+                    "SELECT * FROM items ORDER BY created_at DESC LIMIT 100",
+                );
+                respondJson(res, 200, { items: items.rows });
+                break;
+            }
+            default:
+                respondJson(res, 400, { error: "Bad path" });
+        }
     }
 });
 

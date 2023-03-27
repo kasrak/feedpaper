@@ -1,9 +1,64 @@
 import Head from "next/head";
 import { Inter } from "next/font/google";
+import { useQuery } from "react-query";
 
 const inter = Inter({ subsets: ["latin"] });
 
+async function fetchRecentItems() {
+    const res = await fetch("http://localhost:8888/getItems");
+    return res.json();
+}
+
+function Tweets(props: { items: Array<any> }) {
+    return (
+        <div>
+            {props.items.map((item) => {
+                return (
+                    <div
+                        style={{
+                            padding: 16,
+                            borderBottom: "1px solid #aaa",
+                        }}
+                    >
+                        <div>
+                            <a
+                                href={`https://twitter.com/${item.content.user.screen_name}`}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                            >
+                                {item.content.user.name}
+                                <small>@{item.content.user.screen_name}</small>
+                            </a>
+                            <a
+                                href={`https://twitter.com/${item.content.user.screen_name}/status/${item.content.id}`}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                            >
+                                <small>
+                                    {new Date(
+                                        item.content.created_at,
+                                    ).toLocaleDateString()}
+                                </small>
+                            </a>
+                        </div>
+                        <div>{item.content.full_text}</div>
+                        <details>
+                            <summary>
+                                <small>JSON</small>
+                            </summary>
+                            <pre key={item.id}>
+                                {JSON.stringify(item, null, 2)}
+                            </pre>
+                        </details>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
 export default function Home() {
+    const query = useQuery("recentItems", fetchRecentItems);
     return (
         <>
             <Head>
@@ -18,7 +73,10 @@ export default function Home() {
                 />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <main className={inter.className}>hello</main>
+            <main className={inter.className}>
+                {query.isLoading && <div>Loading...</div>}
+                {query.data && <Tweets items={query.data.items} />}
+            </main>
         </>
     );
 }
