@@ -37,7 +37,6 @@ const server = http.createServer(async (req, res) => {
                 const { tweets } = body.args;
                 for (const tweet of tweets) {
                     if (existingTweetIds.has(tweet.id)) {
-                        console.log("skipping", tweet.id);
                         continue;
                     }
                     // TODO: batch this insertion
