@@ -31,6 +31,10 @@ function formatTweet(rawTweet) {
         return rawTweet;
     }
 
+    if (rawTweet.__typename === "TweetWithVisibilityResults") {
+        rawTweet = rawTweet.tweet;
+    }
+
     const userResult = rawTweet.core.user_results.result;
     const tweet = {
         id: rawTweet.rest_id,
@@ -89,9 +93,16 @@ function getTweetsFromEntries(entries) {
             ...item.tweet_results.result,
         }));
 
-    const tweets = rawTweets.map((rawTweet) => {
-        return formatTweet(rawTweet);
-    });
+    const tweets = rawTweets
+        .map((rawTweet) => {
+            try {
+                return formatTweet(rawTweet);
+            } catch (err) {
+                console.error("Failed to parse tweet", err, rawTweet);
+                return null;
+            }
+        })
+        .filter((tweet) => tweet);
 
     return tweets;
 }
