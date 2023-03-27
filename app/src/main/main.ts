@@ -75,7 +75,7 @@ async function createWindow() {
         }
     });
 
-    browserView.webContents.loadURL("https://twitter.com");
+    // browserView.webContents.openDevTools({ mode: "detach" });
 
     try {
         browserView.webContents.debugger.attach("1.3");
@@ -117,6 +117,40 @@ async function createWindow() {
         },
     );
     browserView.webContents.debugger.sendCommand("Network.enable");
+
+    while (true) {
+        browserView.webContents.loadURL("https://twitter.com");
+        // Wait for it to finish loading.
+        await new Promise((resolve) => {
+            browserView.webContents.on("did-finish-load", resolve);
+        });
+        await browserView.webContents.executeJavaScript(`
+    (async function() {
+        let btns = [];
+        while (true) {
+            btns = Array.from(document.querySelectorAll("a")).filter(
+                node => {
+                    return node.innerText.toLowerCase().includes("following") || node.innerText.toLowerCase().includes("for you");
+                }
+            );
+            if (btns.length > 0) {
+                break;
+            } else {
+                console.log("Waiting for buttons to appear...");
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+        console.log("buttons", btns);
+        for (const btn of btns) {
+            console.log("Clicking", btn.innerText);
+            btn.click();
+            await new Promise(resolve => setTimeout(resolve, 5000 + Math.random() * 2000));
+        }
+    })();
+    `);
+        // Run every 30mins.
+        await new Promise((resolve) => setTimeout(resolve, 1000 * 60 * 30));
+    }
 }
 
 app.on("ready", createWindow);

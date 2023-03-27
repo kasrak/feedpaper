@@ -1,0 +1,2 @@
+- generate basic digest
+- move Tweet parsing from app to server

@@ -84,6 +84,17 @@ function tweetToString(tweet, indent = "") {
 
 async function main() {
     const res = await query("SELECT * FROM items ORDER BY created_at DESC");
+    // TODO: only look at tweets that weren't considered for last digest
+
+    // TODO: remove self-replies and promoted tweets?
+    // tweets = tweets.filter((tweet) => {
+    //     return (
+    //         // Remove self_replies
+    //         (!tweet.self_thread || tweet.self_thread.id_str === tweet.id) &&
+    //         // Remove promoted tweets
+    //         !tweet._isPromoted
+    //     );
+    // });
 
     const tweetStrings = res.rows.map((tweet) => tweetToString(tweet.content));
     const prompts = [];

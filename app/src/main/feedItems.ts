@@ -66,20 +66,5 @@ export async function getFeedItemsFromResponse(
         console.error("Failed to save tweets:", res.status, res.statusText);
     }
 
-    // tweets = tweets.filter((tweet) => {
-    //     return (
-    //         // Remove self_replies
-    //         (!tweet.self_thread || tweet.self_thread.id_str === tweet.id) &&
-    //         // Remove promoted tweets
-    //         !tweet._isPromoted
-    //     );
-    // });
-
-    // for (const tweet of tweets) {
-    //     if (tweet.quoted_tweet) {
-    //         console.log(util.inspect(tweet, { depth: 10 }));
-    //     }
-    // }
-
     return [];
 }
