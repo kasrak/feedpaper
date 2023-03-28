@@ -1,10 +1,19 @@
+- store "source" (for you, following, list)
+- pull in source tweet from replies: http://localhost:3000/tweet/1640846483938476033
+- generate basic digest
+    - does it need up-to-date like/retweet/view counts?
+        - could have it upsert those
 - tweet rendering
-    - fix entities: http://localhost:3000/tweet/1640509131609055234
+    - fix entities:
+        http://localhost:3000/tweet/1640509131609055234
+        http://localhost:3000/tweet/1640724101001261056
     - limit media size
     - animated gifs
     - click to expand media
-    - better "RT" retweet rendering
+    - multi-image http://localhost:3000/tweet/1640585475944505345
+    - better "RT" retweet rendering http://localhost:3000/tweet/1640726145732874241
     - "Show more" for note_tweets
     - card
-- generate basic digest
 - move Tweet parsing from app to server
+- OCR the text in screenshots
+- fix scroll restoration when going back to list

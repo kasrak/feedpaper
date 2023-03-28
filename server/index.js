@@ -59,7 +59,11 @@ const server = http.createServer(async (req, res) => {
         switch (url.pathname) {
             case "/getItems": {
                 const items = await query(
-                    "SELECT * FROM items ORDER BY created_at DESC LIMIT 100",
+                    "SELECT * FROM items WHERE created_at > $1 AND created_at < $2 ORDER BY created_at DESC",
+                    [
+                        url.searchParams.get("start"),
+                        url.searchParams.get("end"),
+                    ],
                 );
                 respondJson(res, 200, { items: items.rows });
                 break;

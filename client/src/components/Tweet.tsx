@@ -1,4 +1,5 @@
 import sortBy from "lodash/sortBy";
+import Link from "next/link";
 
 const Mention = ({
     name,
@@ -107,7 +108,7 @@ export default function Tweet(props: { tweet: any }) {
                     </small>
                 </a>
                 <span className="mx-1">
-                    <a href={`/tweet/${tweet.id}`}>·</a>
+                    <Link href={`/tweet/${tweet.id}`}>·</Link>
                 </span>
                 <a
                     href={`https://twitter.com/${tweet.user.screen_name}/status/${tweet.id}`}
