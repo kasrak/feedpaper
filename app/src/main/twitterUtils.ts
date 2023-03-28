@@ -49,6 +49,7 @@ function formatTweet(rawTweet) {
         created_at: rawTweet.legacy.created_at,
         conversation_id: rawTweet.legacy.conversation_id_str,
         entities: rawTweet.legacy.entities, // {user_mentions, urls, hashtags, symbols}
+        extended_entities: rawTweet.legacy.extended_entities,
         full_text: unescape(rawTweet.legacy.full_text),
         // Long tweets have the full text in the note_tweet.
         note_tweet: rawTweet.note_tweet?.note_tweet_results.result,

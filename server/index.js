@@ -64,6 +64,14 @@ const server = http.createServer(async (req, res) => {
                 respondJson(res, 200, { items: items.rows });
                 break;
             }
+            case "/getItem": {
+                const items = await query(
+                    "SELECT * FROM items WHERE tweet_id = $1",
+                    [url.searchParams.get("tweet_id")],
+                );
+                respondJson(res, 200, { tweet: items.rows[0] });
+                break;
+            }
             default:
                 respondJson(res, 400, { error: "Bad path" });
         }
