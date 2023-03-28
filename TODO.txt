@@ -1,2 +1,9 @@
+- tweet rendering
+    - fix entities: http://localhost:3000/tweet/1640509131609055234
+    - limit media size
+    - animated gifs
+    - click to expand media
+    - better "RT" retweet rendering
+    - "Show more" for note_tweets
 - generate basic digest
 - move Tweet parsing from app to server
