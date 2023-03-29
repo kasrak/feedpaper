@@ -94,6 +94,11 @@ export default function Tweet(props: { tweet: any }) {
             style={{
                 padding: 16,
             }}
+            onDoubleClick={(e) => {
+                console.log(tweet);
+                // Don't also log the parent tweet.
+                e.stopPropagation();
+            }}
         >
             <div className="flex items-center">
                 <a
@@ -134,12 +139,6 @@ export default function Tweet(props: { tweet: any }) {
                     <Tweet tweet={tweet.quoted_tweet} />
                 </div>
             )}
-            <details>
-                <summary>
-                    <small>JSON</small>
-                </summary>
-                <pre>{JSON.stringify(tweet, null, 2)}</pre>
-            </details>
         </div>
     );
 }

@@ -36,15 +36,14 @@ const server = http.createServer(async (req, res) => {
         const body = await getBodyJson(req);
         switch (body.cmd) {
             case "saveTweets": {
-                const existingTweetIds = await getExistingTweetIds();
                 const { tweets } = body.args;
                 for (const tweet of tweets) {
-                    if (existingTweetIds.has(tweet.id)) {
-                        continue;
-                    }
-                    // TODO: batch this insertion
+                    // TODO: batch this upsert
                     await query(
-                        "INSERT INTO items (tweet_id, created_at, content) VALUES ($1, $2, $3)",
+                        "INSERT INTO items (tweet_id, created_at, content)" +
+                            " VALUES ($1, $2, $3)" +
+                            " ON CONFLICT (tweet_id)" +
+                            " DO UPDATE SET content = $3",
                         [tweet.id, tweet.created_at, JSON.stringify(tweet)],
                     );
                 }

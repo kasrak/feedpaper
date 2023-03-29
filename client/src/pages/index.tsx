@@ -40,7 +40,9 @@ function Tweets(props: { items: Array<any> }) {
 }
 
 export default function Home() {
-    const [date, setDate] = useState(new Date());
+    const [date, setDate] = useState(
+        new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+    );
     const query = useQuery(["items", toIsoDate(date)], () => getItems(date));
 
     return (
