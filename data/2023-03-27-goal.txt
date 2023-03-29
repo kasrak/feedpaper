@@ -1,0 +1,39 @@
+Desired digest:
+
+- Starting April 15th, only verified Twitter accounts will be eligible to be in For You recommendations. https://twitter.com/elonmusk/status/1640502698549075972
+- Kili demo: https://twitter.com/ntkris/status/1640509131609055234
+- Explanation of next token prediction: https://twitter.com/bio_bootloader/status/1640512444958396416
+- Jailbreaking app-integrated LLMs: https://twitter.com/iScienceLuvr/status/1640513941796425728
+- pix2struct model launch: it can read screenshots https://twitter.com/danielgross/status/1640515851014004737 https://twitter.com/abacaj/status/1640585475944505345 https://twitter.com/abacaj/status/1640585475944505345
+- conversation on ephemeral AI-generated UIs https://twitter.com/azlenelza/status/1640516534492868609 https://twitter.com/reactathon/status/1640585862806384641 https://twitter.com/sgrove/status/1640417065650778113
+- ChatGPT Outperforms Crowd-Workers for Text-Annotation Tasks https://twitter.com/arankomatsuzaki/status/1640521970608402435 https://twitter.com/abacaj/status/1640524009023348737 https://twitter.com/YiTayML/status/1640540359146242049
+- GPT-X powered US citizenship test practice: https://twitter.com/evanjconrad/status/1640522827152625664 https://twitter.com/jasoncbenn/status/1640820633193025546
+- Correlation between having values and mental health: https://twitter.com/KTmBoyle/status/1640525828621516801
+- Guardrails makes it really easy to ensure LLM-generated data is valid for a pydantic model. https://twitter.com/ShreyaR/status/1640527225031389184
+- rizzGPT source code released: https://twitter.com/bryanhpchiang/status/1640528392679305218
+- Readwise Reader product updates: https://twitter.com/ReadwiseReader/status/1640534020067934214 https://twitter.com/homsiT/status/1640536379628167168 https://twitter.com/homsiT/status/1640540014743257090
+- TikTok ban: https://twitter.com/Fynnderella1/status/1640016692305711105 https://twitter.com/Imani_Barbarin/status/1639561233161502721 https://twitter.com/mirkokiefer/status/1640556634115289088
+- Scaling Expert LLMs: https://twitter.com/johnjnay/status/1640167659697209347 https://twitter.com/mayfer/status/1640573108737445890
+- GPTCHA: captcha for robo-callers: https://twitter.com/nicolas_ouporov/status/1640469903181508608
+- Apple Classic Music app: https://twitter.com/lalizlabeth/status/1640687746904731652
+- Benchmarking LLMs' knowledge cut-off dates: https://twitter.com/ShayneRedford/status/1640702622557523969
+- Idea for smart push notifications powered by GPT: https://twitter.com/vhmth/status/1640706666764161024
+- Demo of ChatGPT plugins: https://twitter.com/danielgross/status/1640711607885107201
+- Darklang is going all in on AI/GPT: https://twitter.com/darklang/status/1640722949907832833
+- Cerebras-GPT, a family of 7 GPT models from 111M to 13B parameters trained using the Chinchilla formula. These are the highest accuracy models for a compute budget and are available today open-source https://twitter.com/CerebrasSystems/status/1640725880711569408 https://twitter.com/MoonGotArt/status/1640768429807505408 https://twitter.com/BlancheMinerva/status/1640767907012509721 https://twitter.com/AiEleuther/status/1640769572784447493 https://twitter.com/abacaj/status/1640830506232172545
+- Demo of AI writing tool: https://twitter.com/Wattenberger/status/1640728197628133377
+- REPLIT partners with Google: https://twitter.com/eerac/status/1640739948948074496 https://twitter.com/Replit/status/1640745029080866817 https://twitter.com/amasad/status/1640755638551851013 https://twitter.com/amasad/status/1640756414623920128 https://twitter.com/amasad/status/1640756745923608576 https://twitter.com/MxMnr/status/1640757695849398284 https://twitter.com/sundarpichai/status/1640758051258138625
+- Langchain release: https://twitter.com/LangChainAI/status/1640745193661165568
+- Perplexity AI raises series A: https://twitter.com/perplexity_ai/status/1640745555872579584 https://twitter.com/AravSrinivas/status/1640763254707466240
+- Figma quality-of-life updates: https://twitter.com/figma/status/1640747746914193411
+- Airtable enterprise features: https://twitter.com/airtable/status/1640748607211991042 https://twitter.com/natfriedman/status/1640749393946226689
+- shape.xyz: an assistant SDK for your app: https://twitter.com/namitchadha/status/1640716429535375360
+- Bicycle by Bartosz Ciechanowski: https://twitter.com/BCiechanowski/status/1640751062247415809
+- Demo of Merlin, text editor that edits text with AI: https://twitter.com/varunshenoy_/status/1640764666946424832
+- Guessing GPT-4's parameter count: https://twitter.com/alyssamvance/status/1640766165189271552
+- Demo of chat on spatial interface: https://twitter.com/_paulshen/status/1640770392557228033
+- Flux: open source tool for interacting with LLMs: https://twitter.com/transmissions11/status/1640775967856803840
+- Genmo: a creative & multimodal chatbot that not only takes image as input, but also generates and EDITs images and videos https://twitter.com/DrJimFan/status/1640783207259074562
+- CoLT5 paper: they have a new transformer architecture that does very well with long inputs by using conditional computation https://twitter.com/finbarrtimbers/status/1640790556078149632
+- GPT4All: an assistant-style chatbot distilled from 430k GPT-3.5-Turbo outputs that you can run on your laptop. https://twitter.com/nomic_ai/status/1640834838578995202 https://twitter.com/andriy_mulyar/status/1640836003194630144
+- Thread of GPT-4 hackathon projects: https://twitter.com/NeildaLikeZelda/status/1640852842532716544
