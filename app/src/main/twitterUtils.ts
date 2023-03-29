@@ -39,6 +39,8 @@ function formatTweet(rawTweet) {
     const tweet = {
         id: rawTweet.rest_id,
 
+        is_promoted: rawTweet._isPromoted,
+
         user: {
             id: userResult.rest_id,
             following: userResult.legacy.following,
