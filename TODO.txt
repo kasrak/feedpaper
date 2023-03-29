@@ -1,4 +1,3 @@
-- store "source" (for you, following, list)
 - pull in source tweet from replies: http://localhost:3000/tweet/1640846483938476033
 - generate basic digest
     - does it need up-to-date like/retweet/view counts?
