@@ -88,12 +88,40 @@ const getText = (data: any) => {
 export default function Tweet(props: { tweet: any }) {
     const { tweet } = props;
 
+    const isPlainRetweet =
+        tweet.retweeted_tweet &&
+        tweet.full_text.startsWith(
+            `RT @${tweet.retweeted_tweet.user.screen_name}: `,
+        );
+
+    if (isPlainRetweet) {
+        return (
+            <div
+                onDoubleClick={(e) => {
+                    console.log(tweet);
+                    // Don't also log the parent tweet.
+                    e.stopPropagation();
+                }}
+            >
+                <div className="flex pt-4 px-4 text-gray-600">
+                    <a
+                        href={`https://twitter.com/${tweet.user.screen_name}`}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="flex items-center hover:underline mr-1"
+                    >
+                        <span className="font-medium">{tweet.user.name}</span>
+                    </a>
+                    retweeted:
+                </div>
+                <Tweet tweet={tweet.retweeted_tweet} />
+            </div>
+        );
+    }
+
     return (
         <div
-            key={tweet.id}
-            style={{
-                padding: 16,
-            }}
+            className="p-4"
             onDoubleClick={(e) => {
                 console.log(tweet);
                 // Don't also log the parent tweet.
@@ -105,9 +133,11 @@ export default function Tweet(props: { tweet: any }) {
                     href={`https://twitter.com/${tweet.user.screen_name}`}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="flex items-center hover:underline"
+                    className="flex items-center hover:underline overflow-hidden"
                 >
-                    <span className="font-medium">{tweet.user.name}</span>
+                    <span className="font-medium truncate">
+                        {tweet.user.name}
+                    </span>
                     <small className="ml-1 text-gray-600">
                         @{tweet.user.screen_name}
                     </small>
@@ -126,9 +156,12 @@ export default function Tweet(props: { tweet: any }) {
                     </small>
                 </a>
             </div>
-            <div className="whitespace-pre-wrap">
-                {getText(tweet)} {tweet.note_tweet && <a href="#">Show more</a>}
-            </div>
+            {!isPlainRetweet && (
+                <div className="whitespace-pre-wrap">
+                    {getText(tweet)}{" "}
+                    {tweet.note_tweet && <a href="#">Show more</a>}
+                </div>
+            )}
             {tweet.retweeted_tweet && (
                 <div className="border border-gray-300 rounded-lg my-2">
                     <Tweet tweet={tweet.retweeted_tweet} />

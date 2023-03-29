@@ -10,7 +10,6 @@
     - animated gifs
     - click to expand media
     - multi-image http://localhost:3000/tweet/1640585475944505345
-    - better "RT" retweet rendering http://localhost:3000/tweet/1640726145732874241
     - "Show more" for note_tweets
     - card
 - move Tweet parsing from app to server
