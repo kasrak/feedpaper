@@ -23,6 +23,8 @@
         "nodemon": "^2.0.22"
     },
     "dependencies": {
+        "@dqbd/tiktoken": "^1.0.2",
+        "langchain": "^0.0.44",
         "node-postgres": "^0.6.2",
         "openai": "^3.2.1",
         "pg": "^8.10.0"
