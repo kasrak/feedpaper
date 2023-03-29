@@ -19,6 +19,31 @@ const Mention = ({
     </a>
 );
 
+function replaceFirst(
+    seq: Array<React.ReactNode>,
+    find: string,
+    replacement: React.ReactNode,
+): Array<React.ReactNode> {
+    const result = [];
+    for (const part of seq) {
+        if (typeof part === "string") {
+            const parts = part.split(find);
+            if (parts.length > 1) {
+                result.push(parts[0]);
+                result.push(replacement);
+                result.push(parts.slice(1).join(find));
+                result.push(...seq.slice(seq.indexOf(part) + 1));
+                return result;
+            } else {
+                result.push(part);
+            }
+        } else {
+            result.push(part);
+        }
+    }
+    return result;
+}
+
 const getText = (data: any) => {
     const { full_text, entities } = data;
 
@@ -41,16 +66,41 @@ const getText = (data: any) => {
         (entity) => entity.indices[0],
     );
 
-    const textParts = [];
-    let currentIndex = 0;
-
+    // The entities have indices into the full text, but they seem to be
+    // off when there are multiple entities. I'm not sure how they're counting
+    // indices, so we just replace text matches instead.
+    let textParts = [full_text];
     mergedEntities.forEach((entity, i) => {
-        textParts.push(full_text.slice(currentIndex, entity.indices[0]));
         switch (entity.type) {
+            case "user_mention":
+                textParts = replaceFirst(
+                    textParts,
+                    `@${entity.screen_name}`,
+                    <Mention
+                        key={full_text + i}
+                        name={entity.name}
+                        screen_name={entity.screen_name}
+                    />,
+                );
+                break;
+            case "photo":
+                textParts = replaceFirst(
+                    textParts,
+                    entity.url,
+                    <img
+                        key={full_text + i}
+                        src={entity.media_url_https}
+                        alt={entity.display_url}
+                        className="max-w-full"
+                    />,
+                );
+                break;
             case "url":
-                textParts.push(
+                textParts = replaceFirst(
+                    textParts,
+                    entity.url,
                     <a
-                        key={i}
+                        key={full_text + i}
                         href={entity.expanded_url}
                         className="text-sky-600 hover:underline"
                         target="_blank"
@@ -60,28 +110,10 @@ const getText = (data: any) => {
                     </a>,
                 );
                 break;
-            case "user_mention":
-                textParts.push(
-                    <Mention
-                        key={i}
-                        name={entity.name}
-                        screen_name={entity.screen_name}
-                    />,
-                );
-                break;
-            case "photo": {
-                textParts.push(<img src={entity.media_url_https} key={i} />);
-                break;
-            }
             default:
                 console.warn("Unknown entity type", entity);
         }
-        currentIndex = entity.indices[1];
     });
-    textParts.push(full_text.slice(currentIndex));
-
-    // TODO: allow expanding when there's a note_
-
     return <>{textParts}</>;
 };
 
