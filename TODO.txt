@@ -9,6 +9,7 @@
     - multi-image http://localhost:3000/tweet/1640585475944505345
     - "Show more" for note_tweets
     - card
+    - dark mode
 - move Tweet parsing from app to server
 - OCR the text in screenshots
 - fix scroll restoration when going back to list
