@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
-import { useState } from "react";
+import { useQueryParam, StringParam, withDefault } from "use-query-params";
 
 function toIsoDate(date: Date) {
     return date.toISOString().split("T")[0];
@@ -40,9 +40,18 @@ function Tweets(props: { items: Array<any> }) {
 }
 
 export default function Home() {
-    const [date, setDate] = useState(
-        new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+    const [dateIso, setDateIso] = useQueryParam(
+        "date",
+        withDefault(
+            StringParam,
+            toIsoDate(new Date(new Date().getTime() - 24 * 60 * 60 * 1000)),
+        ),
     );
+    function setDate(date: Date) {
+        setDateIso(toIsoDate(date));
+    }
+    const date = new Date(dateIso);
+
     const query = useQuery(["items", toIsoDate(date)], () => getItems(date));
 
     return (
