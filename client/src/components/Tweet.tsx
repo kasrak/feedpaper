@@ -1,6 +1,7 @@
 import { checkIfPlainRetweet } from "@/helpers";
 import sortBy from "lodash/sortBy";
 import Link from "next/link";
+import { useState } from "react";
 
 function Mention({ name, screen_name }: { name: string; screen_name: string }) {
     return (
@@ -51,8 +52,13 @@ function replaceFirst(
     return result;
 }
 
-const getText = (data: any) => {
-    const { full_text, entities } = data;
+const getText = (data: any, opts: { showNote: boolean }) => {
+    const { full_text, note_tweet } = data;
+
+    let textParts =
+        note_tweet && opts.showNote ? [note_tweet.text] : [full_text];
+    const entities =
+        note_tweet && opts.showNote ? note_tweet.entity_set : data.entities;
 
     const mergedEntities = sortBy(
         [
@@ -76,7 +82,6 @@ const getText = (data: any) => {
     // The entities have indices into the full text, but they seem to be
     // off when there are multiple entities. I'm not sure how they're counting
     // indices, so we just replace text matches instead.
-    let textParts = [full_text];
     mergedEntities.forEach((entity, i) => {
         switch (entity.type) {
             case "user_mention":
@@ -121,6 +126,8 @@ const getText = (data: any) => {
 
 export default function Tweet(props: { tweet: any }) {
     const { tweet } = props;
+
+    const [showNote, setShowNote] = useState(false);
 
     const isPlainRetweet = checkIfPlainRetweet(tweet);
 
@@ -187,10 +194,19 @@ export default function Tweet(props: { tweet: any }) {
                 </a>
             </div>
             {!isPlainRetweet && (
-                <div className="whitespace-pre-wrap">
-                    {getText(tweet)}{" "}
-                    {tweet.note_tweet && <a href="#">Show more</a>}
-                </div>
+                <>
+                    <div className="whitespace-pre-wrap">
+                        {getText(tweet, { showNote })}{" "}
+                    </div>
+                    {tweet.note_tweet && (
+                        <button
+                            className="text-sky-600"
+                            onClick={() => setShowNote(!showNote)}
+                        >
+                            Show{showNote ? " less" : " more"}
+                        </button>
+                    )}
+                </>
             )}
             {tweet.retweeted_tweet && (
                 <div className="border border-gray-300 rounded-lg my-2">
