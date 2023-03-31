@@ -1,3 +1,4 @@
+import { checkIfPlainRetweet } from "@/helpers";
 import sortBy from "lodash/sortBy";
 import Link from "next/link";
 
@@ -121,11 +122,7 @@ const getText = (data: any) => {
 export default function Tweet(props: { tweet: any }) {
     const { tweet } = props;
 
-    const isPlainRetweet =
-        tweet.retweeted_tweet &&
-        tweet.full_text.startsWith(
-            `RT @${tweet.retweeted_tweet.user.screen_name}: `,
-        );
+    const isPlainRetweet = checkIfPlainRetweet(tweet);
 
     if (isPlainRetweet) {
         return (

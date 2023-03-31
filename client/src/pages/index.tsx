@@ -3,6 +3,7 @@ import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
 import { useQueryParam, StringParam, withDefault } from "use-query-params";
 import { useMemo } from "react";
+import { checkIfPlainRetweet } from "@/helpers";
 
 function toIsoDate(date: Date) {
     return date.toISOString().split("T")[0];
@@ -34,6 +35,23 @@ class Cluster {
         for (const key of keys) {
             this.keys.add(key);
         }
+    }
+    getItems(): Array<TweetT> {
+        const items: Array<TweetT> = [];
+        const ids = new Set<string>();
+        for (const item of this.items) {
+            // filter out retweets if original tweet is in items
+            if (
+                item.retweeted_tweet &&
+                ids.has(item.retweeted_tweet.id) &&
+                checkIfPlainRetweet(item)
+            ) {
+                continue;
+            }
+            items.push(item);
+            ids.add(item.id);
+        }
+        return items;
     }
 }
 
@@ -114,7 +132,7 @@ function Tweets(props: { items: Array<any> }) {
                         key={cluster.id}
                         className="border-b-4 border-b-gray-200"
                     >
-                        {cluster.items.map((item) => {
+                        {cluster.getItems().map((item) => {
                             return (
                                 <div
                                     key={"tweet-" + item.id}

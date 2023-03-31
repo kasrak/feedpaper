@@ -1,5 +1,4 @@
 # Prioritized
-- filter out retweets if original tweet is in that day's feed
 - click to expand media
 - animated gifs
 - collocate related tweets by looking at keywords? https://www.npmjs.com/package/keyword-extractor
