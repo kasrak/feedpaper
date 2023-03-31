@@ -1,7 +1,16 @@
+# Prioritized
+- filter out retweets if original tweet is in that day's feed
+- click to expand media
+- animated gifs
+- exclude non-english tweets
+- collocate related tweets by looking at keywords? https://www.npmjs.com/package/keyword-extractor
+- also collocate tweets from same author (in some time window...?)
+
+---
+
 # Rendering feed
 - pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
 - dark mode
-- colocate replies, self-replies, and quote tweets adjacent to original tweet
 - fix scroll restoration when going back to list
 - fix date issue:
     - should show tweets from yesterday in your timezone, so the default
@@ -10,10 +19,7 @@
       can surface old tweets
 
 # Rendering individual tweets
-- limit media size
-- animated gifs
-- click to expand media
-- multi-image http://localhost:3000/tweet/1640585475944505345
+- multi-image http://localhost:3000/tweet/1640585475944505345 http://localhost:3000/tweet/1641852901713915904
 - "Show more" for note_tweets
 - card
 - if last link is to quoted/retweeted tweet, remove it from text: http://localhost:3000/tweet/1641563370431164416

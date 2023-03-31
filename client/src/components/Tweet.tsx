@@ -1,23 +1,29 @@
 import sortBy from "lodash/sortBy";
 import Link from "next/link";
 
-const Mention = ({
-    name,
-    screen_name,
-}: {
-    name: string;
-    screen_name: string;
-}) => (
-    <a
-        href={`https://twitter.com/${screen_name}`}
-        className="text-sky-600 hover:underline"
-        target="_blank"
-        rel="noopener noreferrer"
-        title={name}
-    >
-        @{screen_name}
-    </a>
-);
+function Mention({ name, screen_name }: { name: string; screen_name: string }) {
+    return (
+        <a
+            href={`https://twitter.com/${screen_name}`}
+            className="text-sky-600 hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+            title={name}
+        >
+            @{screen_name}
+        </a>
+    );
+}
+
+function Media({ entity }: { entity: any }) {
+    return (
+        <img
+            src={entity.media_url_https}
+            alt={entity.display_url}
+            className="rounded mt-2 w-1/2 max-h-72 object-contain border border-gray-200"
+        />
+    );
+}
 
 function replaceFirst(
     seq: Array<React.ReactNode>,
@@ -27,11 +33,11 @@ function replaceFirst(
     const result = [];
     for (const part of seq) {
         if (typeof part === "string") {
-            const parts = part.split(find);
-            if (parts.length > 1) {
-                result.push(parts[0]);
+            const matchIndex = part.toLowerCase().indexOf(find.toLowerCase());
+            if (matchIndex !== -1) {
+                result.push(part.slice(0, matchIndex));
                 result.push(replacement);
-                result.push(parts.slice(1).join(find));
+                result.push(part.slice(matchIndex + find.length));
                 result.push(...seq.slice(seq.indexOf(part) + 1));
                 return result;
             } else {
@@ -77,7 +83,7 @@ const getText = (data: any) => {
                     textParts,
                     `@${entity.screen_name}`,
                     <Mention
-                        key={full_text + i}
+                        key={i}
                         name={entity.name}
                         screen_name={entity.screen_name}
                     />,
@@ -87,12 +93,7 @@ const getText = (data: any) => {
                 textParts = replaceFirst(
                     textParts,
                     entity.url,
-                    <img
-                        key={full_text + i}
-                        src={entity.media_url_https}
-                        alt={entity.display_url}
-                        className="max-w-full"
-                    />,
+                    <Media key={i} entity={entity} />,
                 );
                 break;
             case "url":
@@ -100,7 +101,7 @@ const getText = (data: any) => {
                     textParts,
                     entity.url,
                     <a
-                        key={full_text + i}
+                        key={i}
                         href={entity.expanded_url}
                         className="text-sky-600 hover:underline"
                         target="_blank"

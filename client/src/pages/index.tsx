@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
 import { useQueryParam, StringParam, withDefault } from "use-query-params";
+import { useMemo } from "react";
 
 function toIsoDate(date: Date) {
     return date.toISOString().split("T")[0];
@@ -16,6 +17,80 @@ async function getItems(date: Date) {
     return res.json();
 }
 
+type TweetT = any;
+
+let clusterId = 0;
+class Cluster {
+    id: number;
+    keys: Set<string>;
+    items: Array<TweetT>;
+    constructor() {
+        this.id = clusterId++;
+        this.keys = new Set();
+        this.items = [];
+    }
+    addItem(item: TweetT, keys: Array<string>) {
+        this.items.push(item);
+        for (const key of keys) {
+            this.keys.add(key);
+        }
+    }
+}
+
+function setContains<T>(set: Set<T>, array: Array<T>): boolean {
+    for (const item of array) {
+        if (set.has(item)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function getTweetKeys(tweet: TweetT): Array<string> {
+    const keys = [tweet.id];
+    if (tweet.conversation_id) {
+        keys.push(tweet.conversation_id);
+    }
+    if (tweet.self_thread && tweet.self_thread.id_str) {
+        keys.push(tweet.self_thread.id_str);
+    }
+    if (tweet.in_reply_to_status_id) {
+        keys.push(tweet.in_reply_to_status_id);
+    }
+    if (tweet.quoted_tweet) {
+        keys.push(...getTweetKeys(tweet.quoted_tweet));
+    }
+    if (tweet.retweeted_tweet) {
+        keys.push(...getTweetKeys(tweet.retweeted_tweet));
+    }
+    if (tweet.entities && tweet.entities.urls) {
+        for (const url of tweet.entities.urls) {
+            keys.push(url.expanded_url);
+        }
+    }
+    return keys;
+}
+
+function getClusters(items: Array<TweetT>) {
+    const clusters: Array<Cluster> = [];
+    for (const item of items) {
+        const keys = getTweetKeys(item);
+        let foundCluster = false;
+        for (const cluster of clusters) {
+            if (setContains(cluster.keys, keys)) {
+                foundCluster = true;
+                cluster.addItem(item, keys);
+            }
+        }
+        if (!foundCluster) {
+            const cluster = new Cluster();
+            cluster.addItem(item, keys);
+            clusters.push(cluster);
+        }
+    }
+    return clusters;
+}
+
 function Tweets(props: { items: Array<any> }) {
     if (props.items.length === 0) {
         return (
@@ -23,20 +98,29 @@ function Tweets(props: { items: Array<any> }) {
         );
     }
 
+    const clusters = useMemo(
+        () => getClusters(props.items.map((item) => item.content)),
+        [props.items],
+    );
+
     return (
         <div>
-            {props.items.map((item) => {
+            {clusters.map((cluster) => {
                 return (
                     <div
-                        key={"tweet-" + item.id}
-                        className="border-b border-b-gray-300"
+                        key={cluster.id}
+                        className="border-b-4 border-b-gray-200"
                     >
-                        <Tweet tweet={item.content} />
-                        {item.enrichment && (
-                            <pre>
-                                {JSON.stringify(item.enrichment, null, 2)}
-                            </pre>
-                        )}
+                        {cluster.items.map((item) => {
+                            return (
+                                <div
+                                    key={"tweet-" + item.id}
+                                    className="border-b border-b-gray-300"
+                                >
+                                    <Tweet tweet={item} />
+                                </div>
+                            );
+                        })}
                     </div>
                 );
             })}
