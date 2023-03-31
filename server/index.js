@@ -58,7 +58,10 @@ const server = http.createServer(async (req, res) => {
         switch (url.pathname) {
             case "/getItems": {
                 const items = await query(
-                    "SELECT * FROM items WHERE created_at > $1 AND created_at < $2 ORDER BY created_at, id ASC",
+                    `SELECT * FROM items
+                    WHERE created_at > $1 AND created_at < $2
+                    AND content->'is_promoted' = 'false'
+                    ORDER BY created_at, id ASC`,
                     [
                         url.searchParams.get("start"),
                         url.searchParams.get("end"),

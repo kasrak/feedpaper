@@ -32,6 +32,11 @@ function Tweets(props: { items: Array<any> }) {
                         className="border-b border-b-gray-300"
                     >
                         <Tweet tweet={item.content} />
+                        {item.enrichment && (
+                            <pre>
+                                {JSON.stringify(item.enrichment, null, 2)}
+                            </pre>
+                        )}
                     </div>
                 );
             })}

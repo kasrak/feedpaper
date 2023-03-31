@@ -1,20 +1,27 @@
-- filter out promoted tweets
-- generate basic digest
-    - does it need up-to-date like/retweet/view counts?
-        - could have it upsert those
-- tweet rendering
-    - limit media size
-    - animated gifs
-    - click to expand media
-    - multi-image http://localhost:3000/tweet/1640585475944505345
-    - "Show more" for note_tweets
-    - card
-    - dark mode
-- move Tweet parsing from app to server
-- OCR the text in screenshots
+# Rendering feed
+- pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
+- dark mode
+- colocate replies, self-replies, and quote tweets adjacent to original tweet
 - fix scroll restoration when going back to list
 - fix date issue:
     - should show tweets from yesterday in your timezone, so the default
       "yesterday" view doesn't grow in size throughout the day
     - should be based on ingestion date, not tweet posted date, since "for you"
       can surface old tweets
+
+# Rendering individual tweets
+- limit media size
+- animated gifs
+- click to expand media
+- multi-image http://localhost:3000/tweet/1640585475944505345
+- "Show more" for note_tweets
+- card
+- if last link is to quoted/retweeted tweet, remove it from text: http://localhost:3000/tweet/1641563370431164416
+
+# Generating digest
+- generate basic digest
+- filter out promoted tweets
+- OCR the text in screenshots
+
+# Misc
+- move Tweet parsing from app to server
