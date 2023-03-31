@@ -105,6 +105,9 @@ function Tweets(props: { items: Array<any> }) {
 
     return (
         <div>
+            <div className="text-sm text-gray-600 px-4 py-2 bg-gray-100 border-b border-gray-300">
+                {props.items.length} tweets
+            </div>
             {clusters.map((cluster) => {
                 return (
                     <div
