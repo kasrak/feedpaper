@@ -16,12 +16,6 @@ async function getBodyJson(req) {
     });
 }
 
-async function getExistingTweetIds() {
-    const result = await query("SELECT DISTINCT(tweet_id) FROM items");
-    const existingTweetIds = new Set(result.rows.map((row) => row.tweet_id));
-    return existingTweetIds;
-}
-
 function respondJson(res, statusCode, data) {
     res.statusCode = statusCode;
     res.setHeader("Content-Type", "text/json");
