@@ -1,5 +1,4 @@
 import unescape from "lodash/unescape";
-import { invariant } from "ts-invariant";
 
 function getItemsFromEntry(entry) {
     if (!entry) {
@@ -108,12 +107,6 @@ function getTweetsFromEntries(entries) {
         .filter((tweet) => tweet);
 
     return tweets;
-}
-
-export function formatTweetForPrompt(tweet) {
-    // entities.media (alt text)
-    // card.legacy.binding_values[key={description, domain, title}]
-    return JSON.stringify({}, null, 1);
 }
 
 export function getTweetsFromInstructions(instructions) {
