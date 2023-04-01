@@ -204,11 +204,11 @@ const server = http.createServer(async (req, res) => {
                 for (const tweet of tweets) {
                     // TODO: batch this upsert
                     await query(
-                        "INSERT INTO items (tweet_id, created_at, content)" +
-                            " VALUES ($1, $2, $3)" +
+                        "INSERT INTO items (tweet_id, content)" +
+                            " VALUES ($1, $2)" +
                             " ON CONFLICT (tweet_id)" +
-                            " DO UPDATE SET content = $3",
-                        [tweet.id, tweet.created_at, JSON.stringify(tweet)],
+                            " DO UPDATE SET content = $2",
+                        [tweet.id, JSON.stringify(tweet)],
                     );
                 }
                 respondJson(res, 200, { ok: true });

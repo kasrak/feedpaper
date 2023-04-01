@@ -1,9 +1,7 @@
 # Prioritized
-- fix date issue:
-    - should show tweets from yesterday in your timezone, so the default
-      "yesterday" view doesn't grow in size throughout the day
-    - should be based on ingestion date, not tweet posted date, since "for you"
-      can surface old tweets
+- should show tweets from yesterday in your timezone, so the default
+  "yesterday" view doesn't grow in size throughout the day
+- run "client" in electron app so there's only 1 thing to launch
 - click to expand media
 - animated gifs
 - cluster related tweets by looking at keywords? https://www.npmjs.com/package/keyword-extractor
@@ -29,5 +27,4 @@
 - OCR the text in screenshots
 
 # Misc
-- run "client" in electron app so there's only 1 thing to launch
 - code clean up: save tweets directly from main process, instead of HTTP POST

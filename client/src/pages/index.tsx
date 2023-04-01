@@ -10,8 +10,8 @@ function toIsoDate(date: Date) {
 }
 
 async function getItems(date: Date) {
-    const start = toIsoDate(date);
-    const end = toIsoDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
+    const start = toIsoDate(new Date(date.getTime() - 24 * 60 * 60 * 1000));
+    const end = toIsoDate(date);
     const res = await fetch(`${BASE_URL}/getItems?start=${start}&end=${end}`);
     return res.json();
 }
