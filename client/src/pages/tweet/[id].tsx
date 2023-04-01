@@ -2,12 +2,13 @@ import Head from "next/head";
 import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
 import { useRouter } from "next/router";
+import { BASE_URL } from "@/helpers";
 
 async function fetchTweet(id: string) {
     if (!id) {
         return null;
     }
-    const res = await fetch("http://localhost:8888/getItem?tweet_id=" + id);
+    const res = await fetch(`${BASE_URL}/getItem?tweet_id=${id}`);
     return res.json();
 }
 

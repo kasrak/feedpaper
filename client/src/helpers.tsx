@@ -1,3 +1,5 @@
+export const BASE_URL = "http://localhost:2345";
+
 export function checkIfPlainRetweet(tweet: any): boolean {
     const result =
         tweet.retweeted_tweet &&

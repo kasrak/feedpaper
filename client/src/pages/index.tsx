@@ -3,7 +3,7 @@ import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
 import { useQueryParam, StringParam, withDefault } from "use-query-params";
 import { useMemo } from "react";
-import { checkIfPlainRetweet } from "@/helpers";
+import { BASE_URL, checkIfPlainRetweet } from "@/helpers";
 
 function toIsoDate(date: Date) {
     return date.toISOString().split("T")[0];
@@ -12,9 +12,7 @@ function toIsoDate(date: Date) {
 async function getItems(date: Date) {
     const start = toIsoDate(date);
     const end = toIsoDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
-    const res = await fetch(
-        `http://localhost:2345/getItems?start=${start}&end=${end}`,
-    );
+    const res = await fetch(`${BASE_URL}/getItems?start=${start}&end=${end}`);
     return res.json();
 }
 
