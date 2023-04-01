@@ -29,4 +29,5 @@
 - OCR the text in screenshots
 
 # Misc
-- move Tweet parsing from app to server
+- run "client" in electron app so there's only 1 thing to launch
+- code clean up: save tweets directly from main process, instead of HTTP POST
