@@ -28,7 +28,7 @@ export default function TweetPage() {
                     </div>
                 )}
                 {query.data && (
-                    <div className="max-w-[620px] mx-auto border mt-2 border-gray-300">
+                    <div className="max-w-[620px] mx-auto border mt-2 border-gray-300 bg-white">
                         <Tweet tweet={query.data.tweet.content} />
                     </div>
                 )}
