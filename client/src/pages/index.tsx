@@ -13,7 +13,7 @@ async function getItems(date: Date) {
     const start = toIsoDate(date);
     const end = toIsoDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
     const res = await fetch(
-        `http://localhost:8888/getItems?start=${start}&end=${end}`,
+        `http://localhost:2345/getItems?start=${start}&end=${end}`,
     );
     return res.json();
 }

@@ -31,12 +31,12 @@ export function shouldWatchRequest(request: ResponseReceivedParams) {
     );
 }
 
-export async function getFeedItemsFromResponse(
-    request: ResponseReceivedParams,
+export async function saveFeedItemsFromResponse(
     response: {
         base64Encoded: boolean;
         body: string;
     },
+    serverBaseUrl: string,
 ): Promise<Array<FeedItem>> {
     if (response.base64Encoded) {
         terminate("Response body is unexpectedly base64 encoded");
@@ -47,7 +47,7 @@ export async function getFeedItemsFromResponse(
         bodyParsed.data.home.home_timeline_urt.instructions,
     );
 
-    const res = await fetch("http://0.0.0.0:8888", {
+    const res = await fetch(serverBaseUrl, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

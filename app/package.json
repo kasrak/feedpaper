@@ -10,6 +10,7 @@
     "devDependencies": {
         "@types/lodash": "^4.14.191",
         "@types/node": "^16.18.18",
+        "@types/pg": "^8.6.6",
         "@types/react": "18.x",
         "@types/react-dom": "18.x",
         "electron": "22.x",
@@ -67,6 +68,7 @@
     "dependencies": {
         "lodash": "^4.17.21",
         "node-fetch": "^3.3.1",
+        "pg": "^8.10.0",
         "ts-invariant": "^0.10.3"
     }
 }

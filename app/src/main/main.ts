@@ -3,7 +3,10 @@ import { format } from "url";
 import { app, BrowserView, BrowserWindow } from "electron";
 import { is } from "electron-util";
 import terminate from "./terminate";
-import { getFeedItemsFromResponse, shouldWatchRequest } from "./feedItems";
+import { saveFeedItemsFromResponse, shouldWatchRequest } from "./feedItems";
+
+const http = require("http");
+const { query } = require("./db");
 
 process.on("unhandledRejection", (reason, promise) => {
     console.log("Unhandled Rejection at:", promise, "reason:", reason);
@@ -109,7 +112,7 @@ async function createWindow() {
                                     requestId: params.requestId,
                                 },
                             );
-                        getFeedItemsFromResponse(params, response);
+                        saveFeedItemsFromResponse(response, serverUrl);
                     }
                     break;
                 }
@@ -165,4 +168,85 @@ app.on("activate", () => {
     if (mainWindow === null && app.isReady()) {
         createWindow();
     }
+});
+
+const hostname = "0.0.0.0";
+const port = 2345;
+const serverUrl = `http://${hostname}:${port}`;
+
+async function getBodyJson(req): Promise<any> {
+    return new Promise((resolve, reject) => {
+        let body = "";
+        req.on("data", (chunk) => {
+            body += chunk.toString(); // convert Buffer to string
+        });
+        req.on("end", () => {
+            resolve(JSON.parse(body));
+        });
+    });
+}
+
+function respondJson(res, statusCode, data) {
+    res.statusCode = statusCode;
+    res.setHeader("Content-Type", "text/json");
+    res.end(JSON.stringify(data, null, 2));
+}
+
+const server = http.createServer(async (req, res) => {
+    // Allow CORS
+    res.setHeader("Access-Control-Allow-Origin", "*");
+
+    if (req.method === "POST") {
+        const body = await getBodyJson(req);
+        switch (body.cmd) {
+            case "saveTweets": {
+                const { tweets } = body.args;
+                for (const tweet of tweets) {
+                    // TODO: batch this upsert
+                    await query(
+                        "INSERT INTO items (tweet_id, created_at, content)" +
+                            " VALUES ($1, $2, $3)" +
+                            " ON CONFLICT (tweet_id)" +
+                            " DO UPDATE SET content = $3",
+                        [tweet.id, tweet.created_at, JSON.stringify(tweet)],
+                    );
+                }
+                respondJson(res, 200, { ok: true });
+                break;
+            }
+            default:
+                respondJson(res, 400, { error: "Bad cmd" });
+        }
+    } else {
+        const url = new URL(req.url, serverUrl);
+        switch (url.pathname) {
+            case "/getItems": {
+                const items = await query(
+                    `SELECT * FROM items
+                    WHERE created_at > $1 AND created_at < $2
+                    AND content->'is_promoted' = 'false'
+                    ORDER BY created_at, id ASC`,
+                    [
+                        url.searchParams.get("start"),
+                        url.searchParams.get("end"),
+                    ],
+                );
+                respondJson(res, 200, { items: items.rows });
+                break;
+            }
+            case "/getItem": {
+                const items = await query(
+                    "SELECT * FROM items WHERE tweet_id = $1",
+                    [url.searchParams.get("tweet_id")],
+                );
+                respondJson(res, 200, { tweet: items.rows[0] });
+                break;
+            }
+            default:
+                respondJson(res, 400, { error: "Bad path" });
+        }
+    }
+});
+server.listen(port, hostname, () => {
+    console.log(`Server running at ${serverUrl}`);
 });

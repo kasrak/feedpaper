@@ -1,5 +1,5 @@
 const fs = require("fs");
-const { client, query } = require("./db");
+const { query } = require("../src/main/db");
 const { Configuration, OpenAIApi } = require("openai");
 const tiktoken = require("@dqbd/tiktoken");
 const trace = require("./trace");
