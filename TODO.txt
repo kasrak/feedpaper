@@ -1,10 +1,12 @@
 # Prioritized
 - run "client" in electron app so there's only 1 thing to launch
+- run sqlite in electron app so it doesn't rely on postgres
 - click to expand media
 - animated gifs
 - cluster related tweets by looking at keywords? https://www.npmjs.com/package/keyword-extractor
 - also cluster tweets from same author (in some time window...?)
 - remember scroll position per day
+- use GPT to summarize clusters with 3+ tweets
 
 ---
 
@@ -12,6 +14,7 @@
 - pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
 - dark mode
 - exclude non-english tweets (the "lang" attribute is not reliable)
+- use cluster summaries to merge other tweets into them?
 
 # Rendering individual tweets
 - multi-image http://localhost:3000/tweet/1640585475944505345 http://localhost:3000/tweet/1641852901713915904
