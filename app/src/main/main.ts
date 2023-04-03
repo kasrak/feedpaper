@@ -18,7 +18,7 @@ const windowSize = {
     width: 900,
     height: 780,
 };
-const topChromeHeight = 28;
+const topChromeHeight = 28 + 48;
 
 async function createWindow() {
     mainWindow = new BrowserWindow({
