@@ -1,6 +1,6 @@
 import * as path from "path";
 import { format } from "url";
-import { app, BrowserView, BrowserWindow } from "electron";
+import { app, BrowserView, BrowserWindow, shell } from "electron";
 import { is } from "electron-util";
 import terminate from "./terminate";
 import { saveFeedItemsFromResponse, shouldWatchRequest } from "./feedItems";
@@ -76,6 +76,13 @@ async function createWindow() {
                 height: height - topChromeHeight,
             });
         }
+    });
+
+    browserView.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith("https://") || url.startsWith("http://")) {
+            shell.openExternal(url);
+        }
+        return { action: "deny" };
     });
 
     // browserView.webContents.openDevTools({ mode: "detach" });
