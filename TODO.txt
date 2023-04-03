@@ -1,18 +1,16 @@
 # Prioritized
-- should show tweets from yesterday in your timezone, so the default
-  "yesterday" view doesn't grow in size throughout the day
 - run "client" in electron app so there's only 1 thing to launch
 - click to expand media
 - animated gifs
 - cluster related tweets by looking at keywords? https://www.npmjs.com/package/keyword-extractor
 - also cluster tweets from same author (in some time window...?)
+- remember scroll position per day
 
 ---
 
 # Rendering feed
 - pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
 - dark mode
-- fix scroll restoration when going back to list
 - exclude non-english tweets (the "lang" attribute is not reliable)
 
 # Rendering individual tweets
