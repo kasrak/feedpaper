@@ -4,6 +4,7 @@ import Tweet from "@/components/Tweet";
 import { useQueryParam, StringParam, withDefault } from "use-query-params";
 import { useMemo } from "react";
 import { BASE_URL, checkIfPlainRetweet } from "@/helpers";
+import { sortBy } from "lodash";
 
 function toIsoDate(date: Date) {
     return date.toISOString().split("T")[0];
@@ -35,7 +36,7 @@ class Cluster {
         }
     }
     getItems(): Array<TweetT> {
-        const items: Array<TweetT> = [];
+        let items: Array<TweetT> = [];
         const ids = new Set<string>();
         for (const item of this.items) {
             // filter out retweets if original tweet is in items
@@ -49,6 +50,9 @@ class Cluster {
             items.push(item);
             ids.add(item.id);
         }
+
+        items = sortBy(items, (item) => item.created_at);
+
         return items;
     }
 }
