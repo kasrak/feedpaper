@@ -25,8 +25,8 @@
         "typescript": "4.9.x"
     },
     "build": {
-        "appId": "io.comp.myapp",
-        "productName": "app",
+        "appId": "com.kasrak.feedpaper",
+        "productName": "Feedpaper",
         "extraMetadata": {
             "name": "app",
             "main": "main.js"
@@ -51,6 +51,7 @@
             ]
         },
         "mac": {
+            "icon": "build/icon.png",
             "target": [
                 "zip"
             ]
