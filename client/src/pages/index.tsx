@@ -162,7 +162,8 @@ export default function Home() {
     function setDate(date: Date) {
         setDateIso(toIsoDate(date));
     }
-    const date = new Date(dateIso);
+    // HACK: this will be off-by-1 for some timezones I think
+    const date = new Date(dateIso + "T00:00:00");
 
     const query = useQuery(["items", toIsoDate(date)], () => getItems(date));
 
