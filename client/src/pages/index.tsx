@@ -36,9 +36,12 @@ class Cluster {
         }
     }
     getItems(): Array<TweetT> {
-        let items: Array<TweetT> = [];
+        const allItems = sortBy(this.items, (item) =>
+            new Date(item.created_at).getTime(),
+        );
+        const dedupedItems: Array<TweetT> = [];
         const ids = new Set<string>();
-        for (const item of this.items) {
+        for (const item of allItems) {
             // filter out retweets if original tweet is in items
             if (
                 item.retweeted_tweet &&
@@ -47,13 +50,11 @@ class Cluster {
             ) {
                 continue;
             }
-            items.push(item);
+            dedupedItems.push(item);
             ids.add(item.id);
         }
 
-        items = sortBy(items, (item) => new Date(item.created_at).getTime());
-
-        return items;
+        return dedupedItems;
     }
 }
 
