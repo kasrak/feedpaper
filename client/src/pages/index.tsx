@@ -51,7 +51,7 @@ class Cluster {
             ids.add(item.id);
         }
 
-        items = sortBy(items, (item) => item.created_at);
+        items = sortBy(items, (item) => new Date(item.created_at).getTime());
 
         return items;
     }
