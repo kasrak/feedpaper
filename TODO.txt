@@ -1,33 +1,26 @@
-# Prioritized
-- run "client" in electron app so there's only 1 thing to launch
-- run sqlite in electron app so it doesn't rely on postgres
-- click to expand media
-- animated gifs
-- cluster related tweets by looking at keywords? https://www.npmjs.com/package/keyword-extractor
-- also cluster tweets from same author (in some time window...?)
-- remember scroll position per day
-- use GPT to summarize clusters with 3+ tweets
-- omit plain retweets if original tweet was in yesterday's digest
-- show feed in app as default view
+- standalone app
+    - run "client" in electron app so there's only 1 thing to launch
+    - run sqlite in electron app so it doesn't rely on postgres
+    - show feed in app as default view
+    - code clean up: save tweets directly from main process, instead of HTTP POST
 
----
+- better item rendering
+    - click to expand media
+    - animated gifs/videos
+    - multi-image http://localhost:3000/tweet/1640585475944505345 http://localhost:3000/tweet/1641852901713915904
+    - card
+    - if last link is to quoted/retweeted tweet, remove it from text: http://localhost:3000/tweet/1641563370431164416
+    - "show more" for note_tweets hides media (extended_entities?): http://localhost:3000/tweet/1641482810266648576
 
-# Rendering feed
-- pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
-- dark mode
-- exclude non-english tweets (the "lang" attribute is not reliable)
-- use cluster summaries to merge other tweets into them?
+- better clustering
+    - cluster related tweets by looking at keywords? https://www.npmjs.com/package/keyword-extractor
+    - also cluster tweets from same author (in some time window...?)
+    - use GPT to summarize clusters with 3+ tweets
+    - omit plain retweets if original tweet was in yesterday's digest
+    - don't repeat multiple plain retweets
+    - pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
+    - use cluster summaries to merge other tweets into them?
 
-# Rendering individual tweets
-- multi-image http://localhost:3000/tweet/1640585475944505345 http://localhost:3000/tweet/1641852901713915904
-- card
-- if last link is to quoted/retweeted tweet, remove it from text: http://localhost:3000/tweet/1641563370431164416
-- "show more" for note_tweets hides media (extended_entities?): http://localhost:3000/tweet/1641482810266648576
-
-# Generating digest
-- generate basic digest
-- filter out promoted tweets
-- OCR the text in screenshots
-
-# Misc
-- code clean up: save tweets directly from main process, instead of HTTP POST
+- feed experience
+    - remember scroll position per day
+    - dark mode
