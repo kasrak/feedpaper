@@ -7,6 +7,8 @@
 - also cluster tweets from same author (in some time window...?)
 - remember scroll position per day
 - use GPT to summarize clusters with 3+ tweets
+- omit plain retweets if original tweet was in yesterday's digest
+- show feed in app as default view
 
 ---
 

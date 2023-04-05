@@ -106,6 +106,7 @@ function getClusters(items: Array<TweetT>) {
             if (setContains(cluster.keys, keys)) {
                 foundCluster = true;
                 cluster.addItem(item, keys);
+                break;
             }
         }
         if (!foundCluster) {
