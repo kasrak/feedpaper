@@ -1,6 +1,3 @@
-TODAY:
-- better clustering
-
 - standalone app
     - run "client" in electron app so there's only 1 thing to launch
     - run sqlite in electron app so it doesn't rely on postgres
@@ -16,7 +13,9 @@ TODAY:
     - "show more" for note_tweets hides media (extended_entities?): http://localhost:3000/tweet/1641482810266648576
 
 - better clustering
-    - cluster related tweets by looking at keywords? https://www.npmjs.com/package/keyword-extractor
+    - extract specific topics to build clusters (wip). probably need to do two levels
+      of clustering: 1. on topics, 2. on explicitly connected tweets. #2 will ensure
+      that replies/retweets etc don't get split up.
     - also cluster tweets from same author (in some time window...?)
     - use GPT to summarize clusters with 3+ tweets
     - omit plain retweets if original tweet was in yesterday's digest
