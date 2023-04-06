@@ -6,6 +6,8 @@ import { useMemo } from "react";
 import { BASE_URL, checkIfPlainRetweet } from "@/helpers";
 import { sortBy } from "lodash";
 
+const debugIds: Array<string> = [];
+
 function toIsoDate(date: Date) {
     const pad = (n: number) => (n < 10 ? `0${n}` : n);
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
@@ -97,19 +99,6 @@ export function getTweetKeys(tweet: TweetT): Array<string> {
             keys.push(hashtag.text.toLowerCase());
         }
     }
-    if (tweet.entities && tweet.user_mentions) {
-        for (const mention of tweet.entities.user_mentions) {
-            keys.push(`@` + mention.screen_name.toLowerCase());
-            keys.push(mention.name.toLowerCase());
-        }
-    }
-    if (tweet.enrichment && tweet.enrichment.refs) {
-        for (const ref of tweet.enrichment.refs) {
-            if (typeof ref === "string") {
-                keys.push(ref.toLowerCase());
-            }
-        }
-    }
     return keys;
 }
 
@@ -127,8 +116,8 @@ function getClusters(items: Array<TweetT>) {
         }
         if (!foundCluster) {
             const cluster = new Cluster();
-            cluster.addItem(item, keys);
             clusters.push(cluster);
+            cluster.addItem(item, keys);
         }
     }
     return clusters;
@@ -245,7 +234,15 @@ export default function Home() {
                             Loading...
                         </div>
                     )}
-                    {query.data && <Tweets items={query.data.items} />}
+                    {query.data && (
+                        <Tweets
+                            items={query.data.items.filter((item: any) =>
+                                debugIds.length
+                                    ? debugIds.includes(item.content.id)
+                                    : true,
+                            )}
+                        />
+                    )}
                 </div>
             </main>
         </>
