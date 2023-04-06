@@ -141,7 +141,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
                     e.stopPropagation();
                 }}
             >
-                <div className="flex pt-4 px-4 text-gray-600">
+                <div className="flex pt-4 px-4 text-gray-600 mb-[-0.5em]">
                     <a
                         href={`https://twitter.com/${tweet.user.screen_name}`}
                         target="_blank"
