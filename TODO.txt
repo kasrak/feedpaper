@@ -1,6 +1,5 @@
 TODAY:
 - better clustering
-- condense retweets
 
 - standalone app
     - run "client" in electron app so there's only 1 thing to launch

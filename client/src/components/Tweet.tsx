@@ -124,10 +124,11 @@ const getText = (data: any, opts: { showNote: boolean }) => {
     return <>{textParts}</>;
 };
 
-export default function Tweet(props: { tweet: any }) {
+export default function Tweet(props: { tweet: any; shrink?: boolean }) {
     const { tweet } = props;
 
     const [showNote, setShowNote] = useState(false);
+    const [unshrink, setUnshrink] = useState(false);
 
     const isPlainRetweet = checkIfPlainRetweet(tweet);
 
@@ -158,7 +159,21 @@ export default function Tweet(props: { tweet: any }) {
 
     return (
         <div
-            className="p-4"
+            className="p-4 relative"
+            style={
+                props.shrink && !unshrink
+                    ? {
+                          maxHeight: "80px",
+                          overflow: "hidden",
+                      }
+                    : undefined
+            }
+            onMouseEnter={() => {
+                setUnshrink(true);
+            }}
+            onMouseLeave={() => {
+                setUnshrink(false);
+            }}
             onDoubleClick={(e) => {
                 console.log(tweet);
                 // Don't also log the parent tweet.
@@ -209,14 +224,17 @@ export default function Tweet(props: { tweet: any }) {
                 </>
             )}
             {tweet.retweeted_tweet && (
-                <div className="border border-gray-300 rounded-lg my-2">
-                    <Tweet tweet={tweet.retweeted_tweet} />
+                <div className="border border-gray-300 rounded-lg my-2 overflow-hidden">
+                    <Tweet tweet={tweet.retweeted_tweet} shrink={true} />
                 </div>
             )}
             {tweet.quoted_tweet && (
-                <div className="border border-gray-300 rounded-lg my-2">
-                    <Tweet tweet={tweet.quoted_tweet} />
+                <div className="border border-gray-300 rounded-lg my-2 overflow-hidden">
+                    <Tweet tweet={tweet.quoted_tweet} shrink={true} />
                 </div>
+            )}
+            {props.shrink && !unshrink && (
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.8)] pointer-events-none"></div>
             )}
         </div>
     );
