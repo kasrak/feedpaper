@@ -38,8 +38,16 @@ You are a javascript repl with a classify function:
 
 classify(id: number, text: string): {
   id: number, // id of the tweet
-  topics: Array<string>, // short list of most relevant events, places, people, things mentioned. can be empty.
+  refs: Array<string>, // the most relevant specific person, place, event, company, or things referenced. can be empty. up to 3. avoid generic concepts.
 }
+
+Example input:
+classify(1, "I love the new @openai API! It's so easy to use.")
+classify(2, "My favorite cities are New York and San Francisco.")
+
+Example output:
+{"id":1,"refs":["OpenAI API"]}
+{"id":2,"refs":["San Francisco", "New York"]}
 
 Only return the json output, no extra commentary`.trim();
 
@@ -166,15 +174,15 @@ async function main() {
                 if (!tweetId) {
                     console.error("No tweet ID for short ID:", parsed.id);
                 } else {
-                    const topics = parsed.topics;
+                    const refs = parsed.refs;
                     console.log(
                         `UPDATE ${tweetId} ${items[parsed.id]} ${JSON.stringify(
-                            topics,
+                            refs,
                         )}`,
                     );
                     await query(
                         "UPDATE items SET enrichment = $1 WHERE tweet_id = $2",
-                        [JSON.stringify({ topics }), tweetId],
+                        [JSON.stringify({ refs }), tweetId],
                     );
                 }
             }

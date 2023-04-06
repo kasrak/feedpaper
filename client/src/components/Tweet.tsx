@@ -154,6 +154,9 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
                     retweeted:
                 </div>
                 <Tweet tweet={tweet.retweeted_tweet} />
+                <div className="px-4 mb-4 text-sm text-gray-500">
+                    {(tweet.enrichment?.refs || []).join(", ")}
+                </div>
             </div>
         );
     }
@@ -237,6 +240,9 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
             {props.shrink && !unshrink && (
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.8)] pointer-events-none"></div>
             )}
+            <div className="text-sm text-gray-500">
+                {(tweet.enrichment?.refs || []).join(", ")}
+            </div>
         </div>
     );
 }

@@ -103,9 +103,11 @@ export function getTweetKeys(tweet: TweetT): Array<string> {
             keys.push(mention.name.toLowerCase());
         }
     }
-    if (tweet.enrichment && tweet.enrichment.topics) {
-        for (const topic of tweet.enrichment.topics) {
-            keys.push(topic.toLowerCase());
+    if (tweet.enrichment && tweet.enrichment.refs) {
+        for (const ref of tweet.enrichment.refs) {
+            if (typeof ref === "string") {
+                keys.push(ref.toLowerCase());
+            }
         }
     }
     return keys;
