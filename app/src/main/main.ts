@@ -164,6 +164,7 @@ async function createWindow() {
     clientBrowserView.webContents.loadURL("http://localhost:3000");
 
     mainWindow.setTopBrowserView(clientBrowserView);
+    mainWindow.webContents.send("selected-tab-changed", { tab: "feedpaper" });
     ipcMain.on("set-tab", (event, arg) => {
         switch (arg.tab) {
             case "twitter":
@@ -175,6 +176,7 @@ async function createWindow() {
             default:
                 terminate(`Unknown tab: ${arg.tab}`);
         }
+        mainWindow.webContents.send("selected-tab-changed", arg);
     });
 
     while (true) {

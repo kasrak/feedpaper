@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+
+const electron = (window as any).electron;
 
 const styles = {
     button: {
@@ -15,6 +17,17 @@ const styles = {
 };
 
 export function App() {
+    const [selectedTab, setSelectedTab] = useState("feedpaper");
+    useEffect(() => {
+        const callback = (data: any) => {
+            setSelectedTab(data.tab);
+        };
+        electron.on("selected-tab-changed", callback);
+        return () => {
+            electron.off("selected-tab-changed", callback);
+        };
+    }, []);
+
     return (
         <div>
             <div
@@ -30,11 +43,14 @@ export function App() {
                 <button
                     style={{
                         ...styles.button,
-                        borderBottomColor: "rgb(74, 153, 233)",
+                        borderBottomColor:
+                            selectedTab === "feedpaper"
+                                ? "rgb(74, 153, 233)"
+                                : "transparent",
                     }}
                     onClick={() => {
                         // send message to main process
-                        (window as any).electron.sendMessageToMain("set-tab", {
+                        electron.sendMessageToMain("set-tab", {
                             tab: "feedpaper",
                         });
                     }}
@@ -50,7 +66,10 @@ export function App() {
                     }}
                     style={{
                         ...styles.button,
-                        borderBottomColor: "rgb(74, 153, 233)",
+                        borderBottomColor:
+                            selectedTab === "twitter"
+                                ? "rgb(74, 153, 233)"
+                                : "transparent",
                     }}
                 >
                     Twitter
