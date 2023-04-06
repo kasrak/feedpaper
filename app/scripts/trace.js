@@ -1,4 +1,4 @@
-const { query } = require("./db");
+const { query } = require("../src/main/db");
 
 module.exports = function trace(targetFunction) {
     return async function (...args) {

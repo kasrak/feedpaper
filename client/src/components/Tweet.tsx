@@ -1,4 +1,5 @@
 import { checkIfPlainRetweet } from "@/helpers";
+import { getTweetKeys } from "@/pages";
 import sortBy from "lodash/sortBy";
 import Link from "next/link";
 import { useState } from "react";
@@ -136,7 +137,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
         return (
             <div
                 onDoubleClick={(e) => {
-                    console.log(tweet);
+                    console.log({ tweet, keys: getTweetKeys(tweet) });
                     // Don't also log the parent tweet.
                     e.stopPropagation();
                 }}
@@ -175,7 +176,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
                 setUnshrink(false);
             }}
             onDoubleClick={(e) => {
-                console.log(tweet);
+                console.log({ tweet, keys: getTweetKeys(tweet) });
                 // Don't also log the parent tweet.
                 e.stopPropagation();
             }}
@@ -210,7 +211,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
             </div>
             {!isPlainRetweet && (
                 <>
-                    <div className="whitespace-pre-wrap">
+                    <div className="whitespace-pre-wrap break-words">
                         {getText(tweet, { showNote })}{" "}
                     </div>
                     {tweet.note_tweet && (

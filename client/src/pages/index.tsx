@@ -70,7 +70,7 @@ function setContains<T>(set: Set<T>, array: Array<T>): boolean {
     return false;
 }
 
-function getTweetKeys(tweet: TweetT): Array<string> {
+export function getTweetKeys(tweet: TweetT): Array<string> {
     const keys = [tweet.id];
     if (tweet.conversation_id) {
         keys.push(tweet.conversation_id);
@@ -95,6 +95,17 @@ function getTweetKeys(tweet: TweetT): Array<string> {
     if (tweet.entities && tweet.entities.hashtags) {
         for (const hashtag of tweet.entities.hashtags) {
             keys.push(hashtag.text.toLowerCase());
+        }
+    }
+    if (tweet.entities && tweet.user_mentions) {
+        for (const mention of tweet.entities.user_mentions) {
+            keys.push(`@` + mention.screen_name.toLowerCase());
+            keys.push(mention.name.toLowerCase());
+        }
+    }
+    if (tweet.enrichment && tweet.enrichment.topics) {
+        for (const topic of tweet.enrichment.topics) {
+            keys.push(topic.toLowerCase());
         }
     }
     return keys;
@@ -129,7 +140,13 @@ function Tweets(props: { items: Array<any> }) {
     }
 
     const clusters = useMemo(
-        () => getClusters(props.items.map((item) => item.content)),
+        () =>
+            getClusters(
+                props.items.map((item) => ({
+                    ...item.content,
+                    enrichment: item.enrichment,
+                })),
+            ),
         [props.items],
     );
 
@@ -140,10 +157,18 @@ function Tweets(props: { items: Array<any> }) {
             </div>
             {clusters.map((cluster) => {
                 return (
-                    <div
-                        key={cluster.id}
-                        className="border-b-4 border-b-gray-200"
-                    >
+                    <div key={cluster.id}>
+                        <div
+                            className="p4 bg-gray-200 h-1"
+                            onDoubleClick={() => {
+                                console.log(
+                                    "Cluster keys:",
+                                    Array.from(cluster.keys).filter((a) =>
+                                        isNaN(parseFloat(a)),
+                                    ),
+                                );
+                            }}
+                        />
                         {cluster.getItems().map((item) => {
                             return (
                                 <div
