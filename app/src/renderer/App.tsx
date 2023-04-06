@@ -22,11 +22,32 @@ export function App() {
                     display: "flex",
                     justifyContent: "stretch",
                     alignItems: "center",
-                    height: 55,
+                    height: 56,
                     width: "100%",
+                    borderBottom: "1px solid rgba(0,0,0,0.2)",
                 }}
             >
                 <button
+                    style={{
+                        ...styles.button,
+                        borderBottomColor: "rgb(74, 153, 233)",
+                    }}
+                    onClick={() => {
+                        // send message to main process
+                        (window as any).electron.sendMessageToMain("set-tab", {
+                            tab: "feedpaper",
+                        });
+                    }}
+                >
+                    Feedpaper
+                </button>
+                <button
+                    onClick={() => {
+                        // send message to main process
+                        (window as any).electron.sendMessageToMain("set-tab", {
+                            tab: "twitter",
+                        });
+                    }}
                     style={{
                         ...styles.button,
                         borderBottomColor: "rgb(74, 153, 233)",

@@ -1,6 +1,6 @@
 import * as path from "path";
 import { format } from "url";
-import { app, BrowserView, BrowserWindow, shell } from "electron";
+import { app, BrowserView, BrowserWindow, shell, ipcMain } from "electron";
 import { is } from "electron-util";
 import terminate from "./terminate";
 import { saveFeedItemsFromResponse, shouldWatchRequest } from "./feedItems";
@@ -52,15 +52,36 @@ async function createWindow() {
         mainWindow!.focus();
     });
 
-    const browserView = new BrowserView({
+    const clientBrowserView = new BrowserView({
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
             partition: "persist:main",
         },
     });
-    mainWindow.setBrowserView(browserView);
-    browserView.setBounds({
+    clientBrowserView.setBounds({
+        x: 0,
+        y: topChromeHeight,
+        width: windowSize.width,
+        height: windowSize.height - topChromeHeight,
+    });
+    mainWindow.addBrowserView(clientBrowserView);
+
+    const twitterBrowserView = new BrowserView({
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            partition: "persist:main",
+        },
+    });
+    mainWindow.addBrowserView(twitterBrowserView);
+    twitterBrowserView.setBounds({
+        x: 0,
+        y: topChromeHeight,
+        width: windowSize.width,
+        height: windowSize.height - topChromeHeight,
+    });
+    clientBrowserView.setBounds({
         x: 0,
         y: topChromeHeight,
         width: windowSize.width,
@@ -69,7 +90,13 @@ async function createWindow() {
     mainWindow.on("resize", () => {
         if (mainWindow) {
             const [width, height] = mainWindow.getSize();
-            browserView.setBounds({
+            twitterBrowserView.setBounds({
+                x: 0,
+                y: topChromeHeight,
+                width,
+                height: height - topChromeHeight,
+            });
+            clientBrowserView.setBounds({
                 x: 0,
                 y: topChromeHeight,
                 width,
@@ -78,7 +105,13 @@ async function createWindow() {
         }
     });
 
-    browserView.webContents.setWindowOpenHandler(({ url }) => {
+    twitterBrowserView.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith("https://") || url.startsWith("http://")) {
+            shell.openExternal(url);
+        }
+        return { action: "deny" };
+    });
+    clientBrowserView.webContents.setWindowOpenHandler(({ url }) => {
         if (url.startsWith("https://") || url.startsWith("http://")) {
             shell.openExternal(url);
         }
@@ -88,15 +121,15 @@ async function createWindow() {
     // browserView.webContents.openDevTools({ mode: "detach" });
 
     try {
-        browserView.webContents.debugger.attach("1.3");
+        twitterBrowserView.webContents.debugger.attach("1.3");
     } catch (err) {
         terminate(`Debugger attach failed: ${err}`);
     }
-    browserView.webContents.debugger.on("detach", (event, reason) => {
+    twitterBrowserView.webContents.debugger.on("detach", (event, reason) => {
         terminate(`Debugger detached: ${reason}`);
     });
     const pendingRequestIds = new Set<string>();
-    browserView.webContents.debugger.on(
+    twitterBrowserView.webContents.debugger.on(
         "message",
         async (event, method, params) => {
             switch (method) {
@@ -113,7 +146,7 @@ async function createWindow() {
                         pendingRequestIds.delete(params.requestId);
 
                         const response =
-                            await browserView.webContents.debugger.sendCommand(
+                            await twitterBrowserView.webContents.debugger.sendCommand(
                                 "Network.getResponseBody",
                                 {
                                     requestId: params.requestId,
@@ -126,15 +159,31 @@ async function createWindow() {
             }
         },
     );
-    browserView.webContents.debugger.sendCommand("Network.enable");
+    twitterBrowserView.webContents.debugger.sendCommand("Network.enable");
+
+    clientBrowserView.webContents.loadURL("http://localhost:3000");
+
+    mainWindow.setTopBrowserView(clientBrowserView);
+    ipcMain.on("set-tab", (event, arg) => {
+        switch (arg.tab) {
+            case "twitter":
+                mainWindow.setTopBrowserView(twitterBrowserView);
+                break;
+            case "feedpaper":
+                mainWindow.setTopBrowserView(clientBrowserView);
+                break;
+            default:
+                terminate(`Unknown tab: ${arg.tab}`);
+        }
+    });
 
     while (true) {
-        browserView.webContents.loadURL("https://twitter.com");
+        twitterBrowserView.webContents.loadURL("https://twitter.com");
         // Wait for it to finish loading.
         await new Promise((resolve) => {
-            browserView.webContents.on("did-finish-load", resolve);
+            twitterBrowserView.webContents.on("did-finish-load", resolve);
         });
-        await browserView.webContents.executeJavaScript(`
+        await twitterBrowserView.webContents.executeJavaScript(`
     (async function() {
         let btns = [];
         while (true) {

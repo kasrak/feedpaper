@@ -6,7 +6,7 @@ body {
   margin: 0;
   font-family: -apple-system, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  background: #efefef;
+  background: rgb(245, 246, 249);
 }
 
 h1 {
