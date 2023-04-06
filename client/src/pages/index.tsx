@@ -7,7 +7,10 @@ import { BASE_URL, checkIfPlainRetweet } from "@/helpers";
 import { sortBy } from "lodash";
 
 function toIsoDate(date: Date) {
-    return date.toISOString().split("T")[0];
+    const pad = (n: number) => (n < 10 ? `0${n}` : n);
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+        date.getDate(),
+    )}`;
 }
 
 async function getItems(date: Date) {
@@ -161,10 +164,7 @@ function Tweets(props: { items: Array<any> }) {
 export default function Home() {
     const [dateIso, setDateIso] = useQueryParam(
         "date",
-        withDefault(
-            StringParam,
-            toIsoDate(new Date(new Date().getTime() - 24 * 60 * 60 * 1000)),
-        ),
+        withDefault(StringParam, toIsoDate(new Date())),
     );
     function setDate(date: Date) {
         setDateIso(toIsoDate(date));
