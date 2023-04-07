@@ -132,11 +132,14 @@ function Tweets(props: { items: Array<any> }) {
 
     const clusters = useMemo(
         () =>
-            getClusters(
-                props.items.map((item) => ({
-                    ...item.content,
-                    enrichment: item.enrichment,
-                })),
+            sortBy(
+                getClusters(
+                    props.items.map((item) => ({
+                        ...item.content,
+                        enrichment: item.enrichment,
+                    })),
+                ),
+                (cluster) => -cluster.getItems().length,
             ),
         [props.items],
     );
