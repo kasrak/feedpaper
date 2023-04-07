@@ -283,7 +283,7 @@ const server = http.createServer(async (req, res) => {
                     `SELECT * FROM items
                     WHERE created_at > $1 AND created_at < $2
                     AND content->'is_promoted' = 'false'
-                    ORDER BY created_at, id ASC`,
+                    ORDER BY created_at, content->'id' ASC`,
                     [
                         url.searchParams.get("start"),
                         url.searchParams.get("end"),

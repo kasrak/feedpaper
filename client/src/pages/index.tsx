@@ -2,7 +2,7 @@ import Head from "next/head";
 import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
 import { useQueryParam, StringParam, withDefault } from "use-query-params";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { BASE_URL, checkIfPlainRetweet } from "@/helpers";
 import { sortBy } from "lodash";
 
@@ -29,37 +29,42 @@ class Cluster {
     id: number;
     keys: Set<string>;
     items: Array<TweetT>;
+    _dedupedItems: Array<TweetT> | null = null;
     constructor() {
         this.id = clusterId++;
         this.keys = new Set();
         this.items = [];
     }
     addItem(item: TweetT, keys: Array<string>) {
+        this._dedupedItems = null;
         this.items.push(item);
         for (const key of keys) {
             this.keys.add(key);
         }
     }
     getItems(): Array<TweetT> {
-        const allItems = sortBy(this.items, (item) =>
-            new Date(item.created_at).getTime(),
-        );
-        const dedupedItems: Array<TweetT> = [];
-        const ids = new Set<string>();
-        for (const item of allItems) {
-            // filter out retweets if original tweet is in items
-            if (
-                item.retweeted_tweet &&
-                ids.has(item.retweeted_tweet.id) &&
-                checkIfPlainRetweet(item)
-            ) {
-                continue;
+        if (!this._dedupedItems) {
+            const allItems = sortBy(
+                this.items,
+                (item) => `${new Date(item.created_at).getTime()}${item.id}`,
+            );
+            const dedupedItems: Array<TweetT> = [];
+            const ids = new Set<string>();
+            for (const item of allItems) {
+                // filter out retweets if original tweet is in items
+                if (
+                    item.retweeted_tweet &&
+                    ids.has(item.retweeted_tweet.id) &&
+                    checkIfPlainRetweet(item)
+                ) {
+                    continue;
+                }
+                dedupedItems.push(item);
+                ids.add(item.id);
             }
-            dedupedItems.push(item);
-            ids.add(item.id);
+            this._dedupedItems = dedupedItems;
         }
-
-        return dedupedItems;
+        return this._dedupedItems;
     }
 }
 
@@ -123,26 +128,73 @@ function getClusters(items: Array<TweetT>) {
     return clusters;
 }
 
-function Tweets(props: { items: Array<any> }) {
+function ClusterTweets(props: { cluster: Cluster }) {
+    const { cluster } = props;
+
+    const items = useMemo(() => cluster.getItems(), [cluster]);
+
+    const itemsToShowWhenCollapsed = 2;
+    const [expanded, setExpanded] = useState(() => {
+        return items.length <= 2;
+    });
+
+    return (
+        <div key={cluster.id}>
+            <div
+                className="p4 bg-gray-200 h-1"
+                onDoubleClick={() => {
+                    console.log(
+                        "Cluster keys:",
+                        Array.from(cluster.keys).filter((a) =>
+                            isNaN(parseFloat(a)),
+                        ),
+                    );
+                }}
+            />
+            {(expanded ? items : items.slice(0, itemsToShowWhenCollapsed)).map(
+                (item) => {
+                    return (
+                        <div
+                            key={"tweet-" + item.id}
+                            className="border-b border-b-gray-300"
+                        >
+                            <Tweet tweet={item} />
+                        </div>
+                    );
+                },
+            )}
+            {!expanded && (
+                <div>
+                    <button
+                        className="font-semibold text-sky-600 px-4 py-2"
+                        onClick={() => setExpanded(true)}
+                    >
+                        Show {items.length - itemsToShowWhenCollapsed} more...
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function Tweets(props: { items: Array<TweetT> }) {
     if (props.items.length === 0) {
         return (
             <div className="flex items-center justify-center p-4">No items</div>
         );
     }
 
-    const clusters = useMemo(
-        () =>
-            sortBy(
-                getClusters(
-                    props.items.map((item) => ({
-                        ...item.content,
-                        enrichment: item.enrichment,
-                    })),
-                ),
-                (cluster) => -cluster.getItems().length,
+    const clusters = useMemo(() => {
+        return sortBy(
+            getClusters(
+                props.items.map((item) => ({
+                    ...item.content,
+                    enrichment: item.enrichment,
+                })),
             ),
-        [props.items],
-    );
+            (cluster) => -cluster.getItems().length,
+        );
+    }, [props.items]);
 
     return (
         <div>
@@ -151,29 +203,10 @@ function Tweets(props: { items: Array<any> }) {
             </div>
             {clusters.map((cluster) => {
                 return (
-                    <div key={cluster.id}>
-                        <div
-                            className="p4 bg-gray-200 h-1"
-                            onDoubleClick={() => {
-                                console.log(
-                                    "Cluster keys:",
-                                    Array.from(cluster.keys).filter((a) =>
-                                        isNaN(parseFloat(a)),
-                                    ),
-                                );
-                            }}
-                        />
-                        {cluster.getItems().map((item) => {
-                            return (
-                                <div
-                                    key={"tweet-" + item.id}
-                                    className="border-b border-b-gray-300"
-                                >
-                                    <Tweet tweet={item} />
-                                </div>
-                            );
-                        })}
-                    </div>
+                    <ClusterTweets
+                        key={cluster.getItems()[0].id}
+                        cluster={cluster}
+                    />
                 );
             })}
         </div>
