@@ -13,6 +13,7 @@
     - "show more" for note_tweets hides media (extended_entities?): http://localhost:3000/tweet/1641482810266648576
 
 - better clustering
+    - merge related clusters (fix greedy bug)
     - extract specific topics to build clusters (wip). probably need to do two levels
       of clustering: 1. on topics, 2. on explicitly connected tweets. #2 will ensure
       that replies/retweets etc don't get split up.
