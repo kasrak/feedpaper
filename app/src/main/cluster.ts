@@ -82,11 +82,6 @@ function getTweetKeys(tweet: TweetT): Array<string> {
             keys.push(url.expanded_url);
         }
     }
-    if (tweet.entities && tweet.entities.hashtags) {
-        for (const hashtag of tweet.entities.hashtags) {
-            keys.push(hashtag.text.toLowerCase());
-        }
-    }
     return keys;
 }
 
