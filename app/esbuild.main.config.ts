@@ -7,7 +7,7 @@ const config: BuildOptions = {
         path.resolve("src/main/main.ts"),
         path.resolve("src/main/preload.ts"),
     ],
-    external: ["pg"],
+    external: ["pg", "sqlite3"],
     bundle: true,
     target: "node16.15.0", // electron version target
 };

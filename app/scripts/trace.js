@@ -1,16 +1,16 @@
-const { query } = require("../src/main/db");
+const { all, run } = require("../src/main/db");
 
 module.exports = function trace(targetFunction) {
     return async function (...args) {
         const functionName = targetFunction.name;
         const calledBy = new Error().stack.split("\n")[2].trim();
 
-        const prevCall = await query(
-            "SELECT * FROM trace WHERE function_name = $1 AND args = $2 AND called_by LIKE $3 ORDER BY id DESC LIMIT 1",
-            [functionName, JSON.stringify(args), calledBy.split(":")[0] + "%"],
+        const prevCall = await all(
+            "SELECT * FROM trace WHERE function_name = $1 AND args = $2 ORDER BY id DESC LIMIT 1",
+            [functionName, JSON.stringify(args)],
         );
-        if (prevCall.rowCount > 0) {
-            const { output, error } = prevCall.rows[0];
+        if (prevCall.length > 0) {
+            const { output, error } = prevCall[0];
             if (!error) {
                 // Cached result.
                 return Promise.resolve(output);
@@ -44,7 +44,7 @@ module.exports = function trace(targetFunction) {
                 : null,
         ];
 
-        await query(sql, values);
+        await run(sql, values);
 
         if (error) {
             throw error;

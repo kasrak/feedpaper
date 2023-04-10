@@ -1,5 +1,5 @@
 const fs = require("fs");
-const { query } = require("../src/main/db");
+const { all, run } = require("../src/main/db");
 const { getClusters } = require("../src/main/cluster");
 const { Configuration, OpenAIApi } = require("openai");
 const tiktoken = require("@dqbd/tiktoken");
@@ -110,7 +110,7 @@ const createChatCompletion = trace(async function createChatCompletion(args) {
 });
 
 const getItems = trace(async function getItems() {
-    const res = await query(
+    const res = await all(
         `SELECT * FROM items
                     WHERE created_at > $1 AND created_at < $2
                     AND content->'is_promoted' = 'false'
@@ -123,7 +123,7 @@ const getItems = trace(async function getItems() {
 async function main() {
     const res = await getItems();
 
-    const clusters = getClusters(res.rows.map((row) => row.content));
+    const clusters = getClusters(res.map((row) => row.content));
     const tweetIdByShortId = new Map();
     let items = [];
     for (const cluster of clusters) {
@@ -180,7 +180,7 @@ async function main() {
                             refs,
                         )}`,
                     );
-                    await query(
+                    await run(
                         "UPDATE items SET enrichment = $1 WHERE tweet_id = $2",
                         [JSON.stringify({ refs }), tweetId],
                     );
