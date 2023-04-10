@@ -1,6 +1,5 @@
 - standalone app
     - run "client" in electron app so there's only 1 thing to launch
-    - run sqlite in electron app so it doesn't rely on postgres
     - code clean up: save tweets directly from main process, instead of HTTP POST
     - open tweets in dedicated twitter tab (and separate from bg fetch twitter tab)
 
