@@ -166,7 +166,7 @@ async function createWindow() {
 
     mainWindow.setTopBrowserView(clientBrowserView);
     mainWindow.webContents.send("selected-tab-changed", { tab: "feedpaper" });
-    ipcMain.on("set-tab", (event, arg) => {
+    const setTab = (event, arg) => {
         switch (arg.tab) {
             case "twitter":
                 mainWindow.setTopBrowserView(twitterBrowserView);
@@ -178,6 +178,10 @@ async function createWindow() {
                 terminate(`Unknown tab: ${arg.tab}`);
         }
         mainWindow.webContents.send("selected-tab-changed", arg);
+    };
+    ipcMain.on("set-tab", setTab);
+    mainWindow.on("close", () => {
+        ipcMain.off("set-tab", setTab);
     });
 
     while (true) {
