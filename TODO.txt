@@ -7,7 +7,6 @@
     - click to expand media
     - animated gifs/videos
     - multi-image http://localhost:3000/tweet/1640585475944505345 http://localhost:3000/tweet/1641852901713915904
-    - card
     - if last link is to quoted/retweeted tweet, remove it from text: http://localhost:3000/tweet/1641563370431164416
     - "show more" for note_tweets hides media (extended_entities?): http://localhost:3000/tweet/1641482810266648576
 

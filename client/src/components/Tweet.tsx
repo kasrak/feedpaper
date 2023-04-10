@@ -28,6 +28,54 @@ function Media({ entity }: { entity: any }) {
     );
 }
 
+function TweetCard({ card }: { card: any }) {
+    if (card.legacy.name !== "summary") {
+        // Polls are not supported.
+        return null;
+    }
+
+    function getValue(key: string) {
+        const match = card.legacy.binding_values.find(
+            (obj: any) => obj.key === key,
+        );
+        if (match) {
+            return match.value;
+        }
+        return null;
+    }
+
+    const url = card.legacy.url;
+    const thumbnailImageLarge = getValue("thumbnail_image_large");
+    const description = getValue("description");
+    const title = getValue("title");
+    const domain = getValue("domain");
+
+    return (
+        <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border rounded-lg flex overflow-hidden mt-3 hover:bg-slate-50"
+        >
+            {thumbnailImageLarge && (
+                <img
+                    src={thumbnailImageLarge.image_value.url}
+                    className="w-28 h-28 object-cover border-r"
+                />
+            )}
+            <div className="flex flex-col justify-center text-sm overflow-hidden p-4">
+                <div className="text-gray-600">
+                    {domain && domain.string_value}
+                </div>
+                <div className="truncate">{title && title.string_value}</div>
+                <div className="text-gray-600">
+                    {description && description.string_value}
+                </div>
+            </div>
+        </a>
+    );
+}
+
 function replaceFirst(
     seq: Array<React.ReactNode>,
     find: string,
@@ -237,6 +285,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
                     <Tweet tweet={tweet.quoted_tweet} shrink={true} />
                 </div>
             )}
+            {tweet.card && <TweetCard card={tweet.card} />}
             {props.shrink && !unshrink && (
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.8)] pointer-events-none"></div>
             )}
