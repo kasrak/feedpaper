@@ -59,6 +59,7 @@ async function createWindow() {
             partition: "persist:main",
         },
     });
+    clientBrowserView.setBackgroundColor("#fff");
     clientBrowserView.setBounds({
         x: 0,
         y: topChromeHeight,
