@@ -1,6 +1,6 @@
 const fs = require("fs");
-const { all, run } = require("../src/main/db");
-const { getClusters } = require("../src/main/cluster");
+const { all, run } = require("../main/db");
+const { getClusters } = require("../utils/cluster");
 const { Configuration, OpenAIApi } = require("openai");
 const tiktoken = require("@dqbd/tiktoken");
 const trace = require("./trace");

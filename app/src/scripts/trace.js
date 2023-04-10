@@ -1,4 +1,4 @@
-const { all, run } = require("../src/main/db");
+const { all, run } = require("../main/db");
 
 module.exports = function trace(targetFunction) {
     return async function (...args) {
