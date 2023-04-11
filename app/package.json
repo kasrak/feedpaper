@@ -4,7 +4,7 @@
     "scripts": {
         "dev": "electron-esbuild dev",
         "build": "electron-esbuild build",
-        "ts-node": "ts-node --project tsconfig.json",
+        "script": "ts-node --project tsconfig.json --esm",
         "package": "electron-builder"
     },
     "devDependencies": {

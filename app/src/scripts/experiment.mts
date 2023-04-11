@@ -1,67 +1,54 @@
-const fs = require("fs");
-const { all, run } = require("../main/db");
-const { getClusters } = require("../utils/cluster");
-const { Configuration, OpenAIApi } = require("openai");
-const tiktoken = require("@dqbd/tiktoken");
-const trace = require("./trace");
+import {
+    sqlQuery,
+    sqlDate,
+    sqlJson,
+    trace,
+    run,
+    sqlRun,
+    traceCached,
+} from "./lib.mjs";
+import { Configuration, OpenAIApi } from "openai";
+import { encoding_for_model } from "@dqbd/tiktoken";
+
+const dbSchema = {
+    items: (row) => ({
+        tweet_id: row.tweet_id,
+        created_at: sqlDate(row.created_at),
+        content: sqlJson(row.content),
+        enrichment: sqlJson(row.enrichment),
+    }),
+};
+
+const getItems = traceCached(async () => {
+    return await sqlQuery("SELECT * FROM items LIMIT 10", [], dbSchema.items);
+});
 
 const configuration = new Configuration({
     apiKey: "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",
 });
 const openai = new OpenAIApi(configuration);
 
-function tweetToString(tweet) {
-    let text = tweet.full_text;
-    for (const url of tweet.entities.urls || []) {
-        text = text.replace(url.url, url.expanded_url);
-    }
-
-    if (tweet.quoted_tweet) {
-        text += ` QT: ${tweetToString(tweet.quoted_tweet)}`;
-    }
-    if (tweet.card) {
-        function getValue(values, key) {
-            const match = values.find((value) => value.key === key);
-            return match ? match.value.string_value : "";
-        }
-        const values = tweet.card.legacy.binding_values;
-        const title = getValue(values, "title");
-        const description = getValue(values, "description");
-        text += ` ${title} ${description}`;
-    }
-
-    return text;
-}
-
-const systemPrompt = `
-You are a javascript repl with a classify function:
-
-classify(id: number, text: string): {
-  id: number, // id of the tweet
-  refs: Array<string>, // the most relevant specific person, place, event, company, or things referenced. can be empty. up to 3. avoid generic concepts.
-}
-
-Example input:
-classify(1, "I love the new @openai API! It's so easy to use.")
-classify(2, "My favorite cities are New York and San Francisco.")
-
-Example output:
-{"id":1,"refs":["OpenAI API"]}
-{"id":2,"refs":["San Francisco", "New York"]}
-
-Only return the json output, no extra commentary`.trim();
-
-function getChunks(
-    args /* {
-    prefix: string,
-    suffix: string,
-    items: Array<string>,
-    separator: string,
-    maxChunkTokens: Number,
-} */,
+let usageTotalTokens = 0;
+const createChatCompletion = traceCached(async function createChatCompletion(
+    args,
 ) {
+    const result = await openai.createChatCompletion(args);
+    if (result.status !== 200) {
+        throw new Error(`OpenAI Error: ${result.status}: ${result.statusText}`);
+    }
+    usageTotalTokens += result.data.usage.total_tokens;
+    return result.data;
+});
+
+function getChunks(args: {
+    prefix: string;
+    suffix: string;
+    items: Array<string>;
+    separator: string;
+    maxChunkTokens: number;
+}) {
     const { prefix, suffix, items, separator, maxChunkTokens } = args;
-    const enc = tiktoken.encoding_for_model("gpt-3.5-turbo");
+    const enc = encoding_for_model("gpt-3.5-turbo");
 
     const tokensPerMessage = 4; // gpt-3.5-turbo-0301
     const prefixTokens = enc.encode(prefix).length + tokensPerMessage;
@@ -99,49 +86,68 @@ function getChunks(
     return chunks;
 }
 
-let usageTotalTokens = 0;
-const createChatCompletion = trace(async function createChatCompletion(args) {
-    const result = await openai.createChatCompletion(args);
-    if (result.error) {
-        throw result.error;
-    }
-    usageTotalTokens += result.data.usage.total_tokens;
-    return result.data;
-});
+const systemPrompt = `
+You are a javascript repl with a classify function:
 
-const getItems = trace(async function getItems() {
-    const res = await all(
-        `SELECT * FROM items
-                    WHERE created_at > $1 AND created_at < $2
-                    AND content->'is_promoted' = 'false'
-                    ORDER BY created_at, id ASC`,
-        ["2023-04-05", "2023-04-06"],
-    );
-    return res;
+classify(id: number, text: string): {
+  id: number, // id of the tweet
+  refs: Array<string>, // the most relevant specific person, place, event, company, or things referenced. can be empty. up to 3. avoid generic concepts.
+}
+
+Example input:
+classify(1, "I love the new @openai API! It's so easy to use.")
+classify(2, "My favorite cities are New York and San Francisco.")
+
+Example output:
+{"id":1,"refs":["OpenAI API"]}
+{"id":2,"refs":["San Francisco", "New York"]}
+
+Only return the json output, no extra commentary`.trim();
+
+const tweetToString = trace(function tweetToString(tweet) {
+    let text = tweet.full_text;
+    if (tweet.entities) {
+        for (const url of tweet.entities.urls || []) {
+            text = text.replace(url.url, url.expanded_url);
+        }
+    }
+
+    if (tweet.quoted_tweet) {
+        text += ` QT: ${tweetToString(tweet.quoted_tweet)}`;
+    }
+    if (tweet.card) {
+        function getValue(values, key) {
+            const match = values.find((value) => value.key === key);
+            return match ? match.value.string_value : "";
+        }
+        const values = tweet.card.legacy.binding_values;
+        const title = getValue(values, "title");
+        const description = getValue(values, "description");
+        text += ` ${title} ${description}`;
+    }
+
+    return text;
 });
 
 async function main() {
-    const res = await getItems();
+    const items = await getItems();
 
-    const clusters = getClusters(res.map((row) => row.content));
     const tweetIdByShortId = new Map();
-    let items = [];
-    for (const cluster of clusters) {
-        for (const tweet of cluster.getItems()) {
-            const shortId = items.length;
-            tweetIdByShortId.set(shortId, tweet.id);
-            items.push(
-                `classify(${shortId}, ${JSON.stringify(
-                    tweetToString(tweet).replace(/\n/g, " "),
-                )});`,
-            );
-        }
+    let itemsForPrompt = [];
+    for (const tweet of items) {
+        const shortId = items.length;
+        tweetIdByShortId.set(shortId, tweet.tweet_id);
+        itemsForPrompt.push(
+            `classify(${shortId}, ${JSON.stringify(
+                tweetToString(tweet).replace(/\n/g, " "),
+            )});`,
+        );
     }
 
     const chunks = getChunks({
         maxChunkTokens: 750,
         prefix: systemPrompt,
-        items,
+        items: itemsForPrompt,
         separator: "\n",
         suffix: "",
     });
@@ -180,7 +186,7 @@ async function main() {
                             refs,
                         )}`,
                     );
-                    await run(
+                    await sqlRun(
                         "UPDATE items SET enrichment = $1 WHERE tweet_id = $2",
                         [JSON.stringify({ refs }), tweetId],
                     );
@@ -194,7 +200,6 @@ async function main() {
             (usageTotalTokens / 1000) * 0.002
         }`,
     );
-    process.exit(0);
 }
 
-main();
+run(main);
