@@ -135,11 +135,11 @@ async function main() {
     const tweetIdByShortId = new Map();
     let itemsForPrompt = [];
     for (const tweet of items) {
-        const shortId = items.length;
+        const shortId = itemsForPrompt.length;
         tweetIdByShortId.set(shortId, tweet.tweet_id);
         itemsForPrompt.push(
             `classify(${shortId}, ${JSON.stringify(
-                tweetToString(tweet).replace(/\n/g, " "),
+                tweetToString(tweet.content).replace(/\n/g, " "),
             )});`,
         );
     }
@@ -182,9 +182,9 @@ async function main() {
                 } else {
                     const refs = parsed.refs;
                     console.log(
-                        `UPDATE ${tweetId} ${items[parsed.id]} ${JSON.stringify(
-                            refs,
-                        )}`,
+                        `UPDATE ${tweetId} ${
+                            itemsForPrompt[parsed.id]
+                        } ${JSON.stringify(refs)}`,
                     );
                     await sqlRun(
                         "UPDATE items SET enrichment = $1 WHERE tweet_id = $2",

@@ -12,9 +12,39 @@ function hash(str: string) {
     return crypto.createHash("sha1").update(str).digest("hex");
 }
 
+type EncodedValue = string | void;
+function encodeValue(value: any): EncodedValue {
+    // TODO: make this handle non-JSON-encodable values
+    return JSON.stringify(value);
+}
+
+let _traceCounter = 0;
 export function trace<T extends (...args: any[]) => any>(func: T) {
     return (...args: Parameters<T>): ReturnType<T> => {
-        const result = func(...args);
+        _traceCounter++;
+        pushOutputItem({
+            time: 0,
+            type: "traceStart",
+            traceId: _traceCounter,
+            functionName: func.name,
+            args: args.map((arg) => encodeValue(arg)),
+        });
+        let result, error;
+        try {
+            result = func(...args);
+        } catch (err) {
+            error = err;
+        }
+        pushOutputItem({
+            time: 0,
+            type: "traceEnd",
+            traceId: _traceCounter,
+            returnValue: encodeValue(result),
+            error: error ? encodeValue(error) : null,
+        });
+        if (error) {
+            throw error;
+        }
         return result;
     };
 }
@@ -114,8 +144,44 @@ export function sqlJson(value: string): any | null {
     return value ? JSON.parse(value) : null;
 }
 
+type OutputItem = { time: number } & (
+    | {
+          type: "log";
+          level: "info" | "warn" | "error";
+          message: Array<string>;
+      }
+    | {
+          type: "error";
+          message: string;
+          stack: string;
+      }
+    | {
+          type: "traceStart";
+          traceId: number;
+          functionName: string;
+          args: Array<EncodedValue>;
+      }
+    | {
+          type: "traceEnd";
+          traceId: number;
+          returnValue: EncodedValue;
+          error: EncodedValue;
+      }
+);
+
+let _scriptStartTime = Date.now();
+let _outputContext: Array<OutputItem> = [];
+function pushOutputItem(item: OutputItem) {
+    const itemWithTime = {
+        time: Date.now() - _scriptStartTime,
+        ...item,
+    } as OutputItem;
+    _outputContext.push(itemWithTime);
+}
+
 export function run(main: () => Promise<void>) {
     main().catch((err) => {
+        console.group(_outputContext);
         console.error(err);
         process.exit(1);
     });
