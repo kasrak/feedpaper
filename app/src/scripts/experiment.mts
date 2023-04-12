@@ -289,9 +289,9 @@ async function main() {
     const tweetIdByShortId = new Map();
     let itemsForPrompt: Array<string> = [];
     for (const tweet of items) {
-        if (!goal[tweet.tweet_id]) {
-            continue;
-        }
+        // if (!goal[tweet.tweet_id]) {
+        //     continue;
+        // }
 
         const shortId = itemsForPrompt.length;
         tweetIdByShortId.set(shortId, tweet.tweet_id);
