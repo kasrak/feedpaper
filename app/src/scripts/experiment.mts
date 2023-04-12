@@ -10,6 +10,104 @@ import {
 import { Configuration, OpenAIApi } from "openai";
 import { encoding_for_model } from "@dqbd/tiktoken";
 
+const goal = {
+    "1645576853489586181": {
+        refs: ["bluesky", "nostr"],
+    },
+    "1645575030330519553": {
+        refs: ["Flair"],
+    },
+    "1645558599610171392": {
+        refs: ["AI"],
+    },
+    "1645571158585253888": {
+        refs: ["MSR", "GPT-4"],
+    },
+    "1645583531316498432": {
+        refs: [],
+    },
+    "1645599766083174401": {
+        refs: ["University of Toronto Downtown Recovery project"],
+    },
+    "1645629760037609473": {
+        refs: ["Twitter", "Bluesky"],
+    },
+    "1645629634216869889": {
+        refs: ["Twitter Circle"],
+    },
+    "1645808279849947137": {
+        refs: ["BabyAGI"],
+    },
+    "1645811071230545920": {
+        refs: ["BabyAGI"],
+    },
+    "1645846318328463360": {
+        refs: ["bluesky", "AT protocol"],
+    },
+    "1645811222661718021": {
+        refs: ["autonomous agent"],
+    },
+    "1645807322994978816": {
+        refs: ["crdt"],
+    },
+    "1645807017725153283": {
+        refs: ["China", "AI", "House Select Committee"],
+    },
+    "1645838873300172810": {
+        refs: ["bluesky"],
+    },
+    "1645838119395291136": {
+        refs: ["GPTAgent.js", "BabyAGI"],
+    },
+    "1645835946464509979": {
+        refs: [],
+    },
+    "1645926946793201664": {
+        refs: ["NATO"],
+    },
+    "1645931780011343872": {
+        refs: ["Theory of Fun", "Lenses"],
+    },
+    "1645932707036184576": {
+        refs: ["Neuralink"],
+    },
+    "1645934382631223305": {
+        refs: [],
+    },
+    "1645919732753928192": {
+        refs: ["Auto-GPT"],
+    },
+    "1645919773728083968": {
+        refs: ["Replit"],
+    },
+    "1645894588694142976": {
+        refs: ["Otto"],
+    },
+    "1645900214706864129": {
+        refs: ["LLM", "babyagi"],
+    },
+    "1645905977097744384": {
+        refs: ["babyagi", "Pinecone", "Slack"],
+    },
+    "1645918862557483008": {
+        refs: ["val town", "dynamicland"],
+    },
+    "1645916773726969856": {
+        refs: ["prompt injection"],
+    },
+};
+
+function getDiff(
+    goalItem: { refs: Array<string> },
+    resultItem: { refs: Array<string> },
+) {
+    const goalRefs = new Set(goalItem.refs);
+    const resultRefs = new Set(resultItem.refs);
+    const missingRefs = [...goalRefs].filter((ref) => !resultRefs.has(ref));
+    const extraRefs = [...resultRefs].filter((ref) => !goalRefs.has(ref));
+    return { missingRefs, extraRefs };
+}
+
 const dbSchema = {
     items: (row) => ({
         tweet_id: row.tweet_id,
@@ -164,15 +262,31 @@ const tweetToString = trace(function tweetToString(tweet) {
 async function main() {
     const items = await getItems();
 
+    const results: Record<
+        string,
+        {
+            longId: string;
+            shortId: number;
+            tweetString: string;
+            resultString?: string;
+            resultParsed?: any;
+        }
+    > = {};
     const tweetIdByShortId = new Map();
     let itemsForPrompt: Array<string> = [];
     for (const tweet of items) {
         const shortId = itemsForPrompt.length;
         tweetIdByShortId.set(shortId, tweet.tweet_id);
+
+        const tweetString = tweetToString(tweet.content).replace(/\n/g, " ");
+        results[tweet.tweet_id] = {
+            longId: tweet.tweet_id,
+            shortId,
+            tweetString,
+        };
+
         itemsForPrompt.push(
-            `classify(${shortId}, ${JSON.stringify(
-                tweetToString(tweet.content).replace(/\n/g, " "),
-            )});`,
+            `classify(${shortId}, ${JSON.stringify(tweetString)});`,
         );
     }
 
@@ -198,9 +312,6 @@ async function main() {
             );
         }
 
-        console.log(chunk[1].content);
-        console.log(completion.message!.content);
-
         // TODO: response sometimes has newlines in each JSON object...
         const lines = completion.message!.content.split("\n");
         for (const line of lines) {
@@ -216,7 +327,22 @@ async function main() {
                     console.error("No tweet ID for short ID:", parsed.id);
                 } else {
                     const { topic, refs } = parsed;
-                    console.log(itemsForPrompt[parsed.id], refs);
+                    const result = results[tweetId];
+                    const diff = goal[tweetId]
+                        ? getDiff(goal[tweetId], parsed)
+                        : { missingRefs: null, extraRefs: null };
+                    console.table([
+                        ["id", "tweet", "result", "missing", "extra"],
+                        [
+                            {
+                                _html: `<a href="https://twitter.com/u/status/${tweetId}" target="_blank">${tweetId}</a>`,
+                            },
+                            result.tweetString,
+                            parsed,
+                            diff.missingRefs,
+                            diff.extraRefs,
+                        ],
+                    ]);
                     await sqlRun(
                         "UPDATE items SET enrichment = $1 WHERE tweet_id = $2",
                         [JSON.stringify({ topic, refs }), tweetId],
