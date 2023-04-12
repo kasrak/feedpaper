@@ -20,7 +20,11 @@ const dbSchema = {
 };
 
 const getItems = traceCached(async function getItems() {
-    return await sqlQuery("SELECT * FROM items LIMIT 10", [], dbSchema.items);
+    return await sqlQuery(
+        "SELECT * FROM items WHERE created_at > '2023-04-11' AND created_at < '2023-04-12' AND content->'is_promoted' = 'false'",
+        [],
+        dbSchema.items,
+    );
 });
 
 const configuration = new Configuration({
@@ -32,12 +36,33 @@ let usageTotalTokens = 0;
 const createChatCompletion = traceCached(async function createChatCompletion(
     args,
 ) {
-    const result = await openai.createChatCompletion(args);
-    if (result.status !== 200) {
-        throw new Error(`OpenAI Error: ${result.status}: ${result.statusText}`);
+    const maxRetries = 5;
+    let numRetries = 0;
+    while (true) {
+        const result = await openai.createChatCompletion(args);
+        if (result.status === 200) {
+            usageTotalTokens += result.data.usage!.total_tokens;
+            return result.data;
+        } else if (result.status === 429) {
+            if (numRetries < maxRetries) {
+                numRetries++;
+                const delay = Math.pow(2, numRetries) * 500;
+                console.log(
+                    `OpenAI rate limit exceeded, retrying in ${delay}ms...`,
+                );
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                continue;
+            } else {
+                throw new Error(
+                    `OpenAI Error: ${result.status}: ${result.statusText}`,
+                );
+            }
+        } else {
+            throw new Error(
+                `OpenAI Error: ${result.status}: ${result.statusText}`,
+            );
+        }
     }
-    usageTotalTokens += result.data.usage!.total_tokens;
-    return result.data;
 });
 
 const getChunks = trace(function getChunks(args: {
@@ -91,21 +116,28 @@ You are a javascript repl with a classify function:
 
 classify(id: number, text: string): {
   id: number, // id of the tweet
-  refs: Array<string>, // the most relevant specific person, place, event, company, or things referenced. can be empty. up to 3. avoid generic concepts.
+  refs: Array<string>, // the most relevant specific product, event, company, or things referenced. can be empty. up to 3. avoid generic concepts.
+  topic: "Product news" | "AI research" | "Personal updates" | "Business" | "Airtable" | "Watershed" | "Other", // the most relevant topic.
 }
 
 Example input:
-classify(1, "I love the new @openai API! It's so easy to use.")
-classify(2, "My favorite cities are New York and San Francisco.")
+classify(1, "I love the new @airtable API! It's so easy to use.")
+classify(2, "Came across an old pic of ~4 year old me and this is probably the coolest I've ever been.")
+classify(3, "seems like GPT-4 can output patch files to edit part of an existing file; more efficient than regenerating from scratch!")
+classify(4, "Microsoft releases DeepSpeed chat, a framework to fine tune / run multi-node RLHF on models up to 175B parameters")
+classify(5, "Read the reddit thread on Ozempic improving people's impulse control broadly. Now consider: what are the downstream implications of a society with greater impulse control?")
 
 Example output:
-{"id":1,"refs":["OpenAI API"]}
-{"id":2,"refs":["San Francisco", "New York"]}
+{"id":1,"refs":["Airtable"],"topic":"Product news"}
+{"id":2,"refs":[],"topic":"Personal updates"}
+{"id":3,"refs":["GPT-4"],"topic":"AI research"}
+{"id":4,"refs":["Microsoft", "DeepSpeed chat"],"topic":"AI research"}
+{"id":5,"refs":["Ozempic"],"topic":"Other"}
 
 Only return the json output, no extra commentary`.trim();
 
 const tweetToString = trace(function tweetToString(tweet) {
-    let text = tweet.full_text;
+    let text = `@${tweet.user.screen_name}: ${tweet.full_text}`;
     if (tweet.entities) {
         for (const url of tweet.entities.urls || []) {
             text = text.replace(url.url, url.expanded_url);
@@ -166,6 +198,9 @@ async function main() {
             );
         }
 
+        console.log(chunk[1].content);
+        console.log(completion.message!.content);
+
         // TODO: response sometimes has newlines in each JSON object...
         const lines = completion.message!.content.split("\n");
         for (const line of lines) {
@@ -180,15 +215,11 @@ async function main() {
                 if (!tweetId) {
                     console.error("No tweet ID for short ID:", parsed.id);
                 } else {
-                    const refs = parsed.refs;
-                    console.log(
-                        `UPDATE ${tweetId} ${
-                            itemsForPrompt[parsed.id]
-                        } ${JSON.stringify(refs)}`,
-                    );
+                    const { topic, refs } = parsed;
+                    console.log(itemsForPrompt[parsed.id], refs);
                     await sqlRun(
                         "UPDATE items SET enrichment = $1 WHERE tweet_id = $2",
-                        [JSON.stringify({ refs }), tweetId],
+                        [JSON.stringify({ topic, refs }), tweetId],
                     );
                 }
             }

@@ -199,9 +199,17 @@ export function sqlJson(value: string): any | null {
 
 type OutputItemInfo =
     | {
+          type: "programStart";
+      }
+    | {
+          type: "table";
+          data: any;
+          columns?: Array<string>;
+      }
+    | {
           type: "log";
           level: "info" | "warn" | "error";
-          message: Array<string>;
+          message: Array<EncodedValue>;
       }
     | {
           type: "error";
@@ -234,7 +242,36 @@ function pushOutputItem(info: OutputItemInfo) {
 }
 
 export function run(main: () => Promise<void>) {
+    let _skipLog = false;
+    const originalConsoleLog = console.log;
+    console.log = (...args: any[]) => {
+        if (!_skipLog) {
+            pushOutputItem({
+                type: "log",
+                level: "info",
+                message: args.map((arg) => encodeValue(arg)),
+            });
+        }
+        originalConsoleLog.apply(console, args);
+    };
+    const originalConsoleTable = console.table;
+    console.table = (data: any, columns?: Array<string>) => {
+        pushOutputItem({
+            type: "table",
+            data,
+            columns,
+        });
+        // console.table calls console.log under the hood, but we should
+        // skip sending that because it'd be redundant.
+        _skipLog = true;
+        originalConsoleTable.apply(console, [data, columns]);
+        _skipLog = false;
+    };
+
     let err: Error | null = null;
+    pushOutputItem({
+        type: "programStart",
+    });
     main()
         .catch((_err) => {
             pushOutputItem({
@@ -258,5 +295,6 @@ export function run(main: () => Promise<void>) {
                 console.error(err);
                 process.exit(1);
             }
+            _ws?.close();
         });
 }
