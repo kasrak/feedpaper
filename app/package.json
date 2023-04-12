@@ -13,6 +13,7 @@
         "@types/react": "18.x",
         "@types/react-dom": "18.x",
         "@types/sqlite3": "^3.1.8",
+        "@types/websocket": "^1.0.5",
         "electron": "22.x",
         "electron-builder": "23.x",
         "electron-esbuild": "^7.0.0",
@@ -72,6 +73,7 @@
         "node-fetch": "^3.3.1",
         "openai": "^3.2.1",
         "sqlite3": "^5.1.6",
-        "ts-invariant": "^0.10.3"
+        "ts-invariant": "^0.10.3",
+        "websocket": "^1.0.34"
     }
 }

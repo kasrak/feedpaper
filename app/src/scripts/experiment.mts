@@ -19,7 +19,7 @@ const dbSchema = {
     }),
 };
 
-const getItems = traceCached(async () => {
+const getItems = traceCached(async function getItems() {
     return await sqlQuery("SELECT * FROM items LIMIT 10", [], dbSchema.items);
 });
 
@@ -36,11 +36,11 @@ const createChatCompletion = traceCached(async function createChatCompletion(
     if (result.status !== 200) {
         throw new Error(`OpenAI Error: ${result.status}: ${result.statusText}`);
     }
-    usageTotalTokens += result.data.usage.total_tokens;
+    usageTotalTokens += result.data.usage!.total_tokens;
     return result.data;
 });
 
-function getChunks(args: {
+const getChunks = trace(function getChunks(args: {
     prefix: string;
     suffix: string;
     items: Array<string>;
@@ -58,7 +58,7 @@ function getChunks(args: {
     const itemTokens = items.map((item) => enc.encode(item).length);
     const separatorTokens = enc.encode(separator).length;
 
-    const chunks = [];
+    const chunks: Array<Array<{ role: string; content: string }>> = [];
     let itemIndex = 0;
     while (itemIndex < items.length) {
         const chunk = [{ role: "system", content: systemPrompt }];
@@ -84,7 +84,7 @@ function getChunks(args: {
     }
 
     return chunks;
-}
+});
 
 const systemPrompt = `
 You are a javascript repl with a classify function:
@@ -133,7 +133,7 @@ async function main() {
     const items = await getItems();
 
     const tweetIdByShortId = new Map();
-    let itemsForPrompt = [];
+    let itemsForPrompt: Array<string> = [];
     for (const tweet of items) {
         const shortId = itemsForPrompt.length;
         tweetIdByShortId.set(shortId, tweet.tweet_id);
@@ -167,7 +167,7 @@ async function main() {
         }
 
         // TODO: response sometimes has newlines in each JSON object...
-        const lines = completion.message.content.split("\n");
+        const lines = completion.message!.content.split("\n");
         for (const line of lines) {
             let parsed;
             try {

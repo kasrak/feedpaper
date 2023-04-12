@@ -4,12 +4,34 @@ import path from "path";
 import util from "util";
 import os from "os";
 import sqlite3 from "sqlite3";
+import websocket from "websocket";
 
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
 function hash(str: string) {
     return crypto.createHash("sha1").update(str).digest("hex");
+}
+
+const wsClient = new websocket.client();
+let _ws: websocket.connection | null = null;
+let _messageQueue: Array<string> = [];
+wsClient.on("connect", (ws) => {
+    if (_messageQueue.length) {
+        for (const message of _messageQueue) {
+            ws.sendUTF(message);
+        }
+        _messageQueue = [];
+    }
+    _ws = ws;
+});
+wsClient.connect("ws://localhost:5667");
+function wsSend(message: string) {
+    if (_ws) {
+        _ws.sendUTF(message);
+    } else {
+        _messageQueue.push(message);
+    }
 }
 
 type EncodedValue = string | void;
@@ -23,7 +45,6 @@ export function trace<T extends (...args: any[]) => any>(func: T) {
     return (...args: Parameters<T>): ReturnType<T> => {
         _traceCounter++;
         pushOutputItem({
-            time: 0,
             type: "traceStart",
             traceId: _traceCounter,
             functionName: func.name,
@@ -36,11 +57,10 @@ export function trace<T extends (...args: any[]) => any>(func: T) {
             error = err;
         }
         pushOutputItem({
-            time: 0,
             type: "traceEnd",
             traceId: _traceCounter,
             returnValue: encodeValue(result),
-            error: error ? encodeValue(error) : null,
+            error: error ? encodeValue(error) : undefined,
         });
         if (error) {
             throw error;
@@ -51,6 +71,13 @@ export function trace<T extends (...args: any[]) => any>(func: T) {
 
 export function traceCached<T extends (...args: any[]) => any>(func: T) {
     return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
+        _traceCounter++;
+        pushOutputItem({
+            type: "traceStart",
+            traceId: _traceCounter,
+            functionName: func.name,
+            args: args.map((arg) => encodeValue(arg)),
+        });
         const cacheKey = `${func.name}_${hash(
             JSON.stringify([func.toString(), args]),
         )}`;
@@ -60,10 +87,30 @@ export function traceCached<T extends (...args: any[]) => any>(func: T) {
                 encoding: "utf8",
             });
             const { result } = JSON.parse(cachedData);
+            pushOutputItem({
+                type: "traceEnd",
+                traceId: _traceCounter,
+                returnValue: encodeValue(result),
+                error: undefined,
+            });
             return result as ReturnType<T>;
         } catch (err) {
             if ((err as any).code === "ENOENT") {
-                const result = await func(...args);
+                let result, error;
+                try {
+                    result = await func(...args);
+                } catch (err) {
+                    error = err;
+                }
+                pushOutputItem({
+                    type: "traceEnd",
+                    traceId: _traceCounter,
+                    returnValue: encodeValue(result),
+                    error: error ? encodeValue(error) : undefined,
+                });
+                if (error) {
+                    throw error;
+                }
                 await writeFile(
                     cacheFilePath,
                     JSON.stringify({
@@ -72,6 +119,12 @@ export function traceCached<T extends (...args: any[]) => any>(func: T) {
                 );
                 return result;
             } else {
+                pushOutputItem({
+                    type: "traceEnd",
+                    traceId: _traceCounter,
+                    returnValue: undefined,
+                    error: err,
+                });
                 throw err;
             }
         }
@@ -144,7 +197,7 @@ export function sqlJson(value: string): any | null {
     return value ? JSON.parse(value) : null;
 }
 
-type OutputItem = { time: number } & (
+type OutputItemInfo =
     | {
           type: "log";
           level: "info" | "warn" | "error";
@@ -166,23 +219,44 @@ type OutputItem = { time: number } & (
           traceId: number;
           returnValue: EncodedValue;
           error: EncodedValue;
-      }
-);
+      };
+type OutputItem = { time: number; info: OutputItemInfo };
 
 let _scriptStartTime = Date.now();
 let _outputContext: Array<OutputItem> = [];
-function pushOutputItem(item: OutputItem) {
-    const itemWithTime = {
+function pushOutputItem(info: OutputItemInfo) {
+    const item = {
         time: Date.now() - _scriptStartTime,
-        ...item,
-    } as OutputItem;
-    _outputContext.push(itemWithTime);
+        info,
+    };
+    _outputContext.push(item);
+    wsSend(JSON.stringify(item));
 }
 
 export function run(main: () => Promise<void>) {
-    main().catch((err) => {
-        console.group(_outputContext);
-        console.error(err);
-        process.exit(1);
-    });
+    let err: Error | null = null;
+    main()
+        .catch((_err) => {
+            pushOutputItem({
+                type: "error",
+                message: _err.message,
+                stack: _err.stack || "",
+            });
+            err = _err;
+        })
+        .finally(() => {
+            const dumpFilename = path.join(
+                os.tmpdir(),
+                `dump-${_scriptStartTime}.json`,
+            );
+            fs.writeFileSync(
+                dumpFilename,
+                JSON.stringify(_outputContext, null, 2),
+            );
+            console.info("Output written to", dumpFilename);
+            if (err) {
+                console.error(err);
+                process.exit(1);
+            }
+        });
 }
