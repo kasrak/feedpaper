@@ -29,7 +29,7 @@ function Media({ entity }: { entity: any }) {
 }
 
 function TweetCard({ card }: { card: any }) {
-    if (card.legacy.name !== "summary") {
+    if (card.legacy.name !== "summary" && card.legacy.name !== "player") {
         // Polls are not supported.
         return null;
     }
@@ -45,7 +45,8 @@ function TweetCard({ card }: { card: any }) {
     }
 
     const url = card.legacy.url;
-    const thumbnailImageLarge = getValue("thumbnail_image_large");
+    const thumbnail =
+        getValue("thumbnail_image_large") || getValue("player_image");
     const description = getValue("description");
     const title = getValue("title");
     const domain = getValue("domain");
@@ -57,9 +58,9 @@ function TweetCard({ card }: { card: any }) {
             rel="noopener noreferrer"
             className="border rounded-lg flex overflow-hidden mt-3 hover:bg-slate-50"
         >
-            {thumbnailImageLarge && (
+            {thumbnail && (
                 <img
-                    src={thumbnailImageLarge.image_value.url}
+                    src={thumbnail.image_value.url}
                     className="w-28 h-28 object-cover border-r"
                 />
             )}
