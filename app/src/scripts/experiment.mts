@@ -11,7 +11,13 @@ import { Configuration, OpenAIApi } from "openai";
 import { encoding_for_model } from "@dqbd/tiktoken";
 
 const goal = {
+    "1645923578624507904": {
+        refs: ["Steve Jobs"],
+    },
     "1645576853489586181": {
+        refs: ["bluesky"],
+    },
+    "1645576854785626112": {
         refs: ["bluesky", "nostr"],
     },
     "1645575030330519553": {
@@ -27,7 +33,7 @@ const goal = {
         refs: [],
     },
     "1645599766083174401": {
-        refs: ["University of Toronto Downtown Recovery project"],
+        refs: ["University of Toronto Downtown Recovery"],
     },
     "1645629760037609473": {
         refs: ["Twitter", "Bluesky"],
@@ -214,25 +220,30 @@ You are a javascript repl with a classify function:
 
 classify(id: number, text: string): {
   id: number, // id of the tweet
-  refs: Array<string>, // the most relevant specific product, event, company, or things referenced. can be empty. up to 3. avoid generic concepts.
-  topic: "Product news" | "AI research" | "Personal updates" | "Business" | "Airtable" | "Watershed" | "Other", // the most relevant topic.
+  entities: Array<string>, // entities (events, companies, products, articles, etc) mentioned in the text. can be empty.
+  mainEntity: string | null, // the main subject of the text, from entities. can be null.
 }
 
 Example input:
-classify(1, "I love the new @airtable API! It's so easy to use.")
 classify(2, "Came across an old pic of ~4 year old me and this is probably the coolest I've ever been.")
 classify(3, "seems like GPT-4 can output patch files to edit part of an existing file; more efficient than regenerating from scratch!")
 classify(4, "Microsoft releases DeepSpeed chat, a framework to fine tune / run multi-node RLHF on models up to 175B parameters")
 classify(5, "Read the reddit thread on Ozempic improving people's impulse control broadly. Now consider: what are the downstream implications of a society with greater impulse control?")
 
 Example output:
-{"id":1,"refs":["Airtable"],"topic":"Product news"}
-{"id":2,"refs":[],"topic":"Personal updates"}
-{"id":3,"refs":["GPT-4"],"topic":"AI research"}
-{"id":4,"refs":["Microsoft", "DeepSpeed chat"],"topic":"AI research"}
-{"id":5,"refs":["Ozempic"],"topic":"Other"}
+{"id":2,"entities":[],"mainEntity":null}
+{"id":3,"entities":["GPT-4"],"mainEntity":"GPT-4"}
+{"id":4,"entities":["Microsoft", "DeepSpeed chat","RLHF"],"mainEntity":"DeepSpeed chat"}
+{"id":5,"entities":["Ozempic", "reddit"],"mainEntity":"Ozempic"}
 
 Only return the json output, no extra commentary`.trim();
+
+function removeEmojis(input: string): string {
+    return input.replace(
+        /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/gu,
+        " ",
+    );
+}
 
 const tweetToString = trace(function tweetToString(tweet) {
     let text = `@${tweet.user.screen_name}: ${tweet.full_text}`;
@@ -256,6 +267,9 @@ const tweetToString = trace(function tweetToString(tweet) {
         text += ` ${title} ${description}`;
     }
 
+    // emojis seem to hurt entity extraction
+    text = removeEmojis(text);
+
     return text;
 });
 
@@ -275,6 +289,10 @@ async function main() {
     const tweetIdByShortId = new Map();
     let itemsForPrompt: Array<string> = [];
     for (const tweet of items) {
+        if (!goal[tweet.tweet_id]) {
+            continue;
+        }
+
         const shortId = itemsForPrompt.length;
         tweetIdByShortId.set(shortId, tweet.tweet_id);
 
@@ -301,6 +319,7 @@ async function main() {
     for (const chunk of chunks) {
         const result = await createChatCompletion({
             model: "gpt-3.5-turbo-0301",
+            temperature: 0.1,
             messages: chunk,
             stop: ["\n\n"],
         });
@@ -311,6 +330,9 @@ async function main() {
                 completion.finish_reason,
             );
         }
+
+        // console.log(chunk[1].content);
+        // console.log(completion.message!.content);
 
         // TODO: response sometimes has newlines in each JSON object...
         const lines = completion.message!.content.split("\n");
@@ -326,26 +348,31 @@ async function main() {
                 if (!tweetId) {
                     console.error("No tweet ID for short ID:", parsed.id);
                 } else {
-                    const { topic, refs } = parsed;
+                    const { entities, mainEntity } = parsed;
                     const result = results[tweetId];
                     const diff = goal[tweetId]
-                        ? getDiff(goal[tweetId], parsed)
-                        : { missingRefs: null, extraRefs: null };
-                    console.table([
-                        ["id", "tweet", "result", "missing", "extra"],
-                        [
-                            {
-                                _html: `<a href="https://twitter.com/u/status/${tweetId}" target="_blank">${tweetId}</a>`,
-                            },
-                            result.tweetString,
-                            parsed,
-                            diff.missingRefs,
-                            diff.extraRefs,
-                        ],
-                    ]);
+                        ? getDiff(goal[tweetId], {
+                              refs: entities,
+                          })
+                        : null;
+                    if (diff) {
+                        console.table([
+                            ["id", "tweet", "main", "refs", "missing", "extra"],
+                            [
+                                {
+                                    _html: `<a href="https://twitter.com/u/status/${tweetId}" target="_blank">${tweetId}</a>`,
+                                },
+                                result.tweetString,
+                                mainEntity,
+                                entities,
+                                diff.missingRefs,
+                                diff.extraRefs,
+                            ],
+                        ]);
+                    }
                     await sqlRun(
                         "UPDATE items SET enrichment = $1 WHERE tweet_id = $2",
-                        [JSON.stringify({ topic, refs }), tweetId],
+                        [JSON.stringify({ mainEntity, entities }), tweetId],
                     );
                 }
             }
