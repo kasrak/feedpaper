@@ -39,7 +39,8 @@
       $60 per month. gpt-3-turbo is ~$3 per month. scales with number of people you follow and
       how much they tweet.
     - ideas for improvement
-        - hide low-signal tweets based on your preferences
+        - hide low-signal tweets based on your preferences, or rank based on relevance
+          to your preferences
         - summarize conversation clusters or larger sections, then decide if you want
           to go in and read all the tweets or not
         - pull in from other sources, e.g. HN, mastodon, etc
