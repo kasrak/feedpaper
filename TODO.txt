@@ -1,6 +1,7 @@
 - standalone app
     - run "client" in electron app so there's only 1 thing to launch
     - code clean up: save tweets directly from main process, instead of HTTP POST
+    - run enrichment script automatically
     - open tweets in dedicated twitter tab (and separate from bg fetch twitter tab)
 
 - better item rendering
