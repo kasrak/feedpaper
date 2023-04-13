@@ -206,18 +206,35 @@ function getTweetUsers(tweet: TweetT): Array<string> {
 
 function getSimilarity(a: Cluster, b: Cluster) {
     let similarity = 0;
+
+    const aMainStr = a.mainEntities
+        .getEntries()
+        .map((e) => e[0])
+        .join(" ");
+    const bMainStr = b.mainEntities
+        .getEntries()
+        .map((e) => e[0])
+        .join(" ");
     for (const [mainEntity] of a.mainEntities.getEntries()) {
         if (b.mainEntities.has(mainEntity)) {
             similarity += 10;
+        } else if (bMainStr.includes(mainEntity)) {
+            similarity += 3;
+        }
+    }
+    for (const [mainEntity] of b.mainEntities.getEntries()) {
+        if (aMainStr.includes(mainEntity)) {
+            similarity += 3;
         }
     }
     for (const [entity] of a.allEntities.getEntries()) {
-        if (b.allEntities.has(entity)) {
+        if (b.mainEntities.has(entity)) {
+            similarity += 2;
+        } else if (b.allEntities.has(entity)) {
             similarity += 1;
         }
     }
-    // todo: subset words in entities
-    // todo: subset words in texts
+    // todo: subset words in texts?
     // todo: weight by number of entities?
     return similarity;
 }
@@ -308,7 +325,7 @@ function ClusterTweets(props: {
                     props.onDebugCluster(cluster);
                 }}
             >
-                <div className="relative left-[-200px] w-[200px] text-gray-600">
+                <div className="relative left-[-212px] w-[200px] text-gray-600">
                     <div className="font-semibold">
                         {cluster.mainEntities
                             .getEntries()
@@ -427,7 +444,7 @@ export default function Home() {
                 <title>Feedpaper</title>
             </Head>
             <main>
-                <div className="max-w-[620px] mx-auto border m-2 border-gray-300 bg-white">
+                <div className="max-w-[620px] ml-[250px] border m-2 border-gray-300 bg-white">
                     <div className="p-4 bg-gray-50 border-b border-b-gray-300 flex gap-4">
                         <h3 className="font-semibold text-lg text-gray-800 flex-grow">
                             {date.toLocaleDateString(undefined, {
