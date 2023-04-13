@@ -353,7 +353,24 @@ function ClusterTweets(props: {
                     );
                 },
             )}
-            {!expanded && (
+            {expanded ? (
+                items.length > itemsToShowWhenCollapsed && (
+                    <div
+                        className="bg-white sticky bottom-0"
+                        style={{ boxShadow: "0 -1px #ddd" }}
+                    >
+                        <button
+                            className="font-semibold text-sky-600 px-4 py-2"
+                            onClick={() => {
+                                // TODO: jarring scroll position change
+                                setExpanded(false);
+                            }}
+                        >
+                            Show less
+                        </button>
+                    </div>
+                )
+            ) : (
                 <div>
                     <button
                         className="font-semibold text-sky-600 px-4 py-2"
@@ -436,7 +453,11 @@ export default function Home() {
     // HACK: this will be off-by-1 for some timezones I think
     const date = new Date(dateIso + "T00:00:00");
 
-    const query = useQuery(["items", toIsoDate(date)], () => getItems(date));
+    const query = useQuery({
+        queryKey: ["items", dateIso],
+        queryFn: () => getItems(date),
+        refetchOnWindowFocus: false,
+    });
 
     return (
         <>

@@ -3,6 +3,7 @@
     - code clean up: save tweets directly from main process, instead of HTTP POST
     - run enrichment script automatically
     - open tweets in dedicated twitter tab (and separate from bg fetch twitter tab)
+    - bootstrap sqlite db schema and prepare for migrations (https://github.com/kriasoft/node-sqlite)
 
 - better item rendering
     - click to expand media
@@ -12,10 +13,11 @@
     - "show more" for note_tweets hides media (extended_entities?): http://localhost:3000/tweet/1641482810266648576
 
 - better clustering
+    - better sorting, e.g. http://localhost:3000/?date=2023-04-13 "databricks"
+    - don't repeat multiple plain retweets
     - merge related clusters (fix greedy bug)
     - use GPT to summarize clusters with 3+ tweets
     - omit plain retweets if original tweet was in yesterday's digest
-    - don't repeat multiple plain retweets
     - pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
 
 - feed experience
@@ -44,7 +46,11 @@
     - ideas for improvement
         - hide low-signal tweets based on your preferences, or rank based on relevance
           to your preferences
+            - learn preferences based on interactions (e.g. clicks), use that to update
+          prompt
         - summarize conversation clusters or larger sections, then decide if you want
           to go in and read all the tweets or not
         - pull in from other sources, e.g. HN, mastodon, etc
         - somehow visualize the topic space so you can "skip ahead" more quickly
+        - better few-shot examples: for each prompt pick from list of examples based
+          on semantic similarity to items that will be inside that prompt
