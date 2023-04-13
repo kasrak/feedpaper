@@ -8,6 +8,10 @@ import { sortBy } from "lodash";
 
 const debugIds: Array<string> = [];
 
+////////////////////////////////////////////////////////////////////////////////
+// Data
+////////////////////////////////////////////////////////////////////////////////
+
 function toIsoDate(date: Date) {
     const pad = (n: number) => (n < 10 ? `0${n}` : n);
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
@@ -15,31 +19,72 @@ function toIsoDate(date: Date) {
     )}`;
 }
 
-async function getItems(date: Date) {
-    const start = toIsoDate(new Date(date.getTime() - 24 * 60 * 60 * 1000));
-    const end = toIsoDate(date);
-    const res = await fetch(`${BASE_URL}/getItems?start=${start}&end=${end}`);
-    return res.json();
+function normalizeEntity(entity: string) {
+    return entity.toLowerCase().replace(/[@\-]/g, "");
+}
+
+function setContains<T>(set: Set<T>, array: Array<T>): boolean {
+    for (const item of array) {
+        if (set.has(item)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 type TweetT = any;
+
+class CountSet {
+    map: Map<string, number> = new Map();
+    add(key: string) {
+        this.map.set(key, (this.map.get(key) || 0) + 1);
+    }
+    has(key: string): boolean {
+        return this.map.has(key);
+    }
+    getMostCommon(max: number): Array<string> {
+        return this.getEntries()
+            .slice(0, max)
+            .map((a) => a[0]);
+    }
+    getEntries(): Array<[string, number]> {
+        const entries = Array.from(this.map.entries()).sort(
+            (a, b) => b[1] - a[1],
+        );
+        return entries;
+    }
+}
 
 let clusterId = 0;
 class Cluster {
     id: number;
     keys: Set<string>;
     items: Array<TweetT>;
+    mainEntities: CountSet;
+    allEntities: CountSet;
     _dedupedItems: Array<TweetT> | null = null;
     constructor() {
         this.id = clusterId++;
         this.keys = new Set();
         this.items = [];
+        this.mainEntities = new CountSet();
+        this.allEntities = new CountSet();
     }
     addItem(item: TweetT, keys: Array<string>) {
         this._dedupedItems = null;
         this.items.push(item);
         for (const key of keys) {
             this.keys.add(key);
+        }
+
+        if (item.enrichment) {
+            const { mainEntity, entities } = item.enrichment;
+            if (mainEntity) {
+                this.mainEntities.add(normalizeEntity(mainEntity));
+            }
+            for (const entity of entities) {
+                this.allEntities.add(normalizeEntity(entity));
+            }
         }
     }
     getItems(): Array<TweetT> {
@@ -66,15 +111,6 @@ class Cluster {
         }
         return this._dedupedItems;
     }
-}
-
-function setContains<T>(set: Set<T>, array: Array<T>): boolean {
-    for (const item of array) {
-        if (set.has(item)) {
-            return true;
-        }
-    }
-    return false;
 }
 
 export function getTweetKeys(tweet: TweetT): Array<string> {
@@ -120,7 +156,18 @@ function getClusters(items: Array<TweetT>) {
             cluster.addItem(item, keys);
         }
     }
-    return clusters;
+    return sortBy(clusters, (cluster) => -cluster.getItems().length);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// UI
+////////////////////////////////////////////////////////////////////////////////
+
+async function getItems(date: Date) {
+    const start = toIsoDate(new Date(date.getTime() - 24 * 60 * 60 * 1000));
+    const end = toIsoDate(date);
+    const res = await fetch(`${BASE_URL}/getItems?start=${start}&end=${end}`);
+    return res.json();
 }
 
 function ClusterTweets(props: { cluster: Cluster }) {
@@ -136,7 +183,7 @@ function ClusterTweets(props: { cluster: Cluster }) {
     return (
         <div key={cluster.id}>
             <div
-                className="p4 bg-gray-200 h-1"
+                className="p4 bg-gray-200 min-h-1"
                 onDoubleClick={() => {
                     console.log(
                         "Cluster keys:",
@@ -145,7 +192,16 @@ function ClusterTweets(props: { cluster: Cluster }) {
                         ),
                     );
                 }}
-            />
+            >
+                <b>
+                    <pre>
+                        {JSON.stringify(cluster.mainEntities.getEntries())}
+                    </pre>
+                </b>
+                <div className="mono pre-wrap">
+                    {JSON.stringify(cluster.allEntities.getEntries())}
+                </div>
+            </div>
             {(expanded ? items : items.slice(0, itemsToShowWhenCollapsed)).map(
                 (item) => {
                     return (
@@ -180,14 +236,11 @@ function Tweets(props: { items: Array<TweetT> }) {
     }
 
     const clusters = useMemo(() => {
-        return sortBy(
-            getClusters(
-                props.items.map((item) => ({
-                    ...item.content,
-                    enrichment: item.enrichment,
-                })),
-            ),
-            (cluster) => -cluster.getItems().length,
+        return getClusters(
+            props.items.map((item) => ({
+                ...item.content,
+                enrichment: item.enrichment,
+            })),
         );
     }, [props.items]);
 
