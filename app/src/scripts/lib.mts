@@ -254,6 +254,17 @@ export function run(main: () => Promise<void>) {
         }
         originalConsoleLog.apply(console, args);
     };
+    const originalConsoleError = console.error;
+    console.log = (...args: any[]) => {
+        if (!_skipLog) {
+            pushOutputItem({
+                type: "log",
+                level: "error",
+                message: args.map((arg) => encodeValue(arg)),
+            });
+        }
+        originalConsoleError.apply(console, args);
+    };
     const originalConsoleTable = console.table;
     console.table = (data: any, columns?: Array<string>) => {
         pushOutputItem({

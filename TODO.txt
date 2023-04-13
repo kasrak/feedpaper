@@ -34,6 +34,8 @@
           conversation clusters are next to each other. a much better reading experience,
           because you're not constantly context switching between topics. transitions between
           related topics instead.
+            - using this as a "continuous" sorting signal instead of a "discrete" grouping
+              signal works better. sorting is more forgiving to the LLM getting it wrong.
     - the 24-hour tape delay also makes it possible to do all this post-processing without
       worrying about LLM speed, which is nice.
     - gpt-4 is better, but too expensive to feed every tweet through... for me that would be

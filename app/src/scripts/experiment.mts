@@ -125,7 +125,7 @@ const dbSchema = {
 
 const getItems = traceCached(async function getItems() {
     return await sqlQuery(
-        "SELECT * FROM items WHERE created_at > '2023-04-11' AND created_at < '2023-04-12' AND content->'is_promoted' = 'false'",
+        "SELECT * FROM items WHERE created_at > '2023-04-12' AND created_at < '2023-04-13' AND content->'is_promoted' = 'false'",
         [],
         dbSchema.items,
     );
@@ -317,6 +317,7 @@ async function main() {
     });
 
     for (const chunk of chunks) {
+        console.log(chunk[1].content);
         const result = await createChatCompletion({
             model: "gpt-3.5-turbo-0301",
             temperature: 0.1,
@@ -325,14 +326,12 @@ async function main() {
         });
         const completion = result.choices[0];
         if (completion.finish_reason !== "stop") {
-            console.warn(
+            console.log(
                 "completion ran out of tokens! finish_reason =",
                 completion.finish_reason,
             );
         }
-
-        // console.log(chunk[1].content);
-        // console.log(completion.message!.content);
+        console.log(completion.message!.content);
 
         // TODO: response sometimes has newlines in each JSON object...
         const lines = completion.message!.content.split("\n");

@@ -296,6 +296,10 @@ function ClusterTweets(props: {
         return items.length <= 2;
     });
 
+    const mainEntitiesSet = new Set(
+        cluster.mainEntities.getEntries().map(([entity]) => entity),
+    );
+
     return (
         <div key={cluster.id}>
             <div
@@ -303,7 +307,23 @@ function ClusterTweets(props: {
                 onDoubleClick={() => {
                     props.onDebugCluster(cluster);
                 }}
-            ></div>
+            >
+                <div className="relative left-[-200px] w-[200px] text-gray-600">
+                    <div className="font-semibold">
+                        {cluster.mainEntities
+                            .getEntries()
+                            .map(([entity, count]) => entity)
+                            .join(", ")}
+                    </div>
+                    <div>
+                        {cluster.allEntities
+                            .getEntries()
+                            .map(([entity, count]) => entity)
+                            .filter((entity) => !mainEntitiesSet.has(entity))
+                            .join(", ")}
+                    </div>
+                </div>
+            </div>
             {(expanded ? items : items.slice(0, itemsToShowWhenCollapsed)).map(
                 (item) => {
                     return (
