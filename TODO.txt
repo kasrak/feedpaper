@@ -12,16 +12,35 @@
 
 - better clustering
     - merge related clusters (fix greedy bug)
-    - extract specific topics to build clusters (wip). probably need to do two levels
-      of clustering: 1. on topics, 2. on explicitly connected tweets. #2 will ensure
-      that replies/retweets etc don't get split up.
-    - also cluster tweets from same author (in some time window...?)
     - use GPT to summarize clusters with 3+ tweets
     - omit plain retweets if original tweet was in yesterday's digest
     - don't repeat multiple plain retweets
     - pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
-    - use cluster summaries to merge other tweets into them?
 
 - feed experience
     - remember scroll position per day
     - dark mode
+
+- demo notes
+    - first: 24-hour tape delay
+        - solves fomo, constantly checking. everything will be there tomorrow,
+        and there's no incentive to check multiple times per day.
+        - but also lets us do better grouping of tweets.
+    - better grouping of tweets:
+        - first: start with the data that's available: replies, retweets, quotes, urls.
+          this creates "conversation" clusters.
+        - then use gpt-3-turbo to extract entities, and re-sort the timeline so related
+          conversation clusters are next to each other. a much better reading experience,
+          because you're not constantly context switching between topics. transitions between
+          related topics instead.
+    - the 24-hour tape delay also makes it possible to do all this post-processing without
+      worrying about LLM speed, which is nice.
+    - gpt-4 is better, but too expensive to feed every tweet through... for me that would be
+      $60 per month. gpt-3-turbo is ~$3 per month. scales with number of people you follow and
+      how much they tweet.
+    - ideas for improvement
+        - hide low-signal tweets based on your preferences
+        - summarize conversation clusters or larger sections, then decide if you want
+          to go in and read all the tweets or not
+        - pull in from other sources, e.g. HN, mastodon, etc
+        - somehow visualize the topic space so you can "skip ahead" more quickly
