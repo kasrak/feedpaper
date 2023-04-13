@@ -111,6 +111,61 @@ class Cluster {
         }
         return this._dedupedItems;
     }
+    getUserCount(): number {
+        return new Set(this.items.flatMap((item) => getTweetUsers(item))).size;
+    }
+    toString(): string {
+        return JSON.stringify(this.mainEntities.getEntries());
+    }
+}
+
+class ClusterGraph {
+    nodes: Map<Cluster, Map<Cluster, number>>;
+
+    constructor() {
+        this.nodes = new Map();
+    }
+
+    addNode(cluster: Cluster): void {
+        if (!this.nodes.has(cluster)) {
+            this.nodes.set(cluster, new Map());
+        }
+    }
+
+    addEdge(clusterA: Cluster, clusterB: Cluster, weight: number): void {
+        this.nodes.get(clusterA)!.set(clusterB, weight);
+        this.nodes.get(clusterB)!.set(clusterA, weight);
+    }
+
+    getNeighbors(cluster: Cluster): Map<Cluster, number> | undefined {
+        return this.nodes.get(cluster);
+    }
+}
+
+function dfs(
+    cluster: Cluster,
+    graph: ClusterGraph,
+    unvisited: Set<Cluster>,
+    sortedClusters: Array<Cluster>,
+): void {
+    unvisited.delete(cluster);
+    sortedClusters.push(cluster);
+
+    const neighbors = Array.from(graph.getNeighbors(cluster)!.entries()).sort(
+        (a, b) => b[1] - a[1],
+    );
+
+    for (const [nextCluster] of neighbors) {
+        if (unvisited.has(nextCluster)) {
+            dfs(nextCluster, graph, unvisited, sortedClusters);
+        }
+    }
+}
+
+function assert(truthy: any, message: string) {
+    if (!truthy) {
+        throw new Error(message);
+    }
 }
 
 export function getTweetKeys(tweet: TweetT): Array<string> {
@@ -138,8 +193,37 @@ export function getTweetKeys(tweet: TweetT): Array<string> {
     return keys;
 }
 
+function getTweetUsers(tweet: TweetT): Array<string> {
+    const users = [tweet.user.screen_name];
+    if (tweet.retweeted_tweet) {
+        users.push(tweet.retweeted_tweet.user.screen_name);
+    }
+    if (tweet.quoted_tweet) {
+        users.push(tweet.quoted_tweet.user.screen_name);
+    }
+    return users;
+}
+
+function getSimilarity(a: Cluster, b: Cluster) {
+    let similarity = 0;
+    for (const [mainEntity] of a.mainEntities.getEntries()) {
+        if (b.mainEntities.has(mainEntity)) {
+            similarity += 10;
+        }
+    }
+    for (const [entity] of a.allEntities.getEntries()) {
+        if (b.allEntities.has(entity)) {
+            similarity += 1;
+        }
+    }
+    // todo: subset words in entities
+    // todo: subset words in texts
+    // todo: weight by number of entities?
+    return similarity;
+}
+
 function getClusters(items: Array<TweetT>) {
-    const clusters: Array<Cluster> = [];
+    let clusters: Array<Cluster> = [];
     for (const item of items) {
         const keys = getTweetKeys(item);
         let foundCluster = false;
@@ -156,7 +240,36 @@ function getClusters(items: Array<TweetT>) {
             cluster.addItem(item, keys);
         }
     }
-    return sortBy(clusters, (cluster) => -cluster.getItems().length);
+
+    // First sort by number of users involved as an initial heuristic
+    // for interestingness (although this should be more based on
+    // length of unique users involved in a cluster...)
+    clusters = sortBy(clusters, (cluster) => -cluster.getUserCount());
+
+    // Now order clusters so related clusters are closer together.
+    const graph = new ClusterGraph();
+    for (const cluster of clusters) {
+        graph.addNode(cluster);
+    }
+    for (let i = 0; i < clusters.length; i++) {
+        for (let j = i + 1; j < clusters.length; j++) {
+            const similarity = getSimilarity(clusters[i], clusters[j]);
+            if (similarity > 0) {
+                graph.addEdge(clusters[i], clusters[j], similarity);
+            }
+        }
+    }
+    const unvisited = new Set<Cluster>(graph.nodes.keys());
+    const sortedClusters: Array<Cluster> = [];
+    while (unvisited.size > 0) {
+        // kinda inefficient, but we want to "stable sort" so that
+        // between similar cluster groups, we go back to the original
+        // interestingness order.
+        const remainingClusters = clusters.filter((c) => unvisited.has(c));
+        dfs(remainingClusters[0], graph, unvisited, sortedClusters);
+    }
+
+    return sortedClusters;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -170,7 +283,10 @@ async function getItems(date: Date) {
     return res.json();
 }
 
-function ClusterTweets(props: { cluster: Cluster }) {
+function ClusterTweets(props: {
+    cluster: Cluster;
+    onDebugCluster: (cluster: Cluster) => void;
+}) {
     const { cluster } = props;
 
     const items = useMemo(() => cluster.getItems(), [cluster]);
@@ -185,12 +301,7 @@ function ClusterTweets(props: { cluster: Cluster }) {
             <div
                 className="p4 bg-gray-200 min-h-1"
                 onDoubleClick={() => {
-                    console.log(
-                        "Cluster keys:",
-                        Array.from(cluster.keys).filter((a) =>
-                            isNaN(parseFloat(a)),
-                        ),
-                    );
+                    props.onDebugCluster(cluster);
                 }}
             >
                 <b>
@@ -201,6 +312,7 @@ function ClusterTweets(props: { cluster: Cluster }) {
                 <div className="mono pre-wrap">
                     {JSON.stringify(cluster.allEntities.getEntries())}
                 </div>
+                <div>{cluster.getUserCount()}</div>
             </div>
             {(expanded ? items : items.slice(0, itemsToShowWhenCollapsed)).map(
                 (item) => {
@@ -244,6 +356,30 @@ function Tweets(props: { items: Array<TweetT> }) {
         );
     }, [props.items]);
 
+    const debugCluster = (cluster: Cluster) => {
+        const clustersWithSimilarity = sortBy(
+            clusters.map((c) => [getSimilarity(cluster, c), c] as const),
+            (c) => -c[0],
+        );
+        console.log(
+            "main entities",
+            JSON.stringify(cluster.mainEntities.getEntries()),
+        );
+        console.log(
+            "all entities",
+            JSON.stringify(cluster.allEntities.getEntries()),
+        );
+        console.log("user count", cluster.getUserCount());
+        console.log("related clusters:");
+        console.table(
+            clustersWithSimilarity
+                .filter(([similarity]) => similarity > 0)
+                .map(([similarity, cluster]) => {
+                    return [similarity, cluster.toString()];
+                }),
+        );
+    };
+
     return (
         <div>
             <div className="text-sm text-gray-600 px-4 py-2 bg-gray-100 border-b border-gray-300">
@@ -254,6 +390,7 @@ function Tweets(props: { items: Array<TweetT> }) {
                     <ClusterTweets
                         key={cluster.getItems()[0].id}
                         cluster={cluster}
+                        onDebugCluster={debugCluster}
                     />
                 );
             })}

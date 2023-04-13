@@ -28,8 +28,14 @@ function Media({ entity }: { entity: any }) {
     );
 }
 
+const supportedCardNames = new Set([
+    "summary",
+    "player",
+    "summary_large_image",
+]);
+
 function TweetCard({ card }: { card: any }) {
-    if (card.legacy.name !== "summary" && card.legacy.name !== "player") {
+    if (!supportedCardNames.has(card.legacy.name)) {
         // Polls are not supported.
         return null;
     }
