@@ -180,6 +180,8 @@ const getText = (data: any, opts: { showNote: boolean }) => {
     return <>{textParts}</>;
 };
 
+const DEBUG = false;
+
 export default function Tweet(props: { tweet: any; shrink?: boolean }) {
     const { tweet } = props;
 
@@ -188,7 +190,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
 
     const isPlainRetweet = checkIfPlainRetweet(tweet);
 
-    const enrichmentBox = tweet.enrichment && (
+    const debugBox = DEBUG && tweet.enrichment && (
         <div className="mt-1 text-sm text-gray-500">
             {Object.entries(tweet.enrichment).map(([key, value]) => (
                 <div key={key}>
@@ -203,7 +205,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
         return (
             <div
                 onDoubleClick={(e) => {
-                    console.log({ tweet, keys: getTweetKeys(tweet) });
+                    console.log(tweet);
                     // Don't also log the parent tweet.
                     e.stopPropagation();
                 }}
@@ -220,7 +222,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
                     retweeted:
                 </div>
                 <Tweet tweet={tweet.retweeted_tweet} />
-                {enrichmentBox}
+                {debugBox}
             </div>
         );
     }
@@ -243,7 +245,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
                 setUnshrink(false);
             }}
             onDoubleClick={(e) => {
-                console.log({ tweet, keys: getTweetKeys(tweet) });
+                console.log(tweet);
                 // Don't also log the parent tweet.
                 e.stopPropagation();
             }}
@@ -305,7 +307,7 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
             {props.shrink && !unshrink && (
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.8)] pointer-events-none"></div>
             )}
-            {enrichmentBox}
+            {debugBox}
         </div>
     );
 }

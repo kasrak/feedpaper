@@ -299,21 +299,11 @@ function ClusterTweets(props: {
     return (
         <div key={cluster.id}>
             <div
-                className="p4 bg-gray-200 min-h-1"
+                className="bg-gray-200 h-1"
                 onDoubleClick={() => {
                     props.onDebugCluster(cluster);
                 }}
-            >
-                <b>
-                    <pre>
-                        {JSON.stringify(cluster.mainEntities.getEntries())}
-                    </pre>
-                </b>
-                <div className="mono pre-wrap">
-                    {JSON.stringify(cluster.allEntities.getEntries())}
-                </div>
-                <div>{cluster.getUserCount()}</div>
-            </div>
+            ></div>
             {(expanded ? items : items.slice(0, itemsToShowWhenCollapsed)).map(
                 (item) => {
                     return (
