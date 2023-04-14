@@ -180,18 +180,20 @@ const getText = (data: any, opts: { showNote: boolean }) => {
     return <>{textParts}</>;
 };
 
-const DEBUG = false;
-
-export default function Tweet(props: { tweet: any; shrink?: boolean }) {
-    const { tweet } = props;
+export default function Tweet(props: {
+    tweet: any;
+    shrink?: boolean;
+    isDebug: boolean;
+}) {
+    const { tweet, isDebug } = props;
 
     const [showNote, setShowNote] = useState(false);
     const [unshrink, setUnshrink] = useState(false);
 
     const isPlainRetweet = checkIfPlainRetweet(tweet);
 
-    const debugBox = DEBUG && tweet.enrichment && (
-        <div className="mt-1 text-sm text-gray-500">
+    const debugBox = isDebug && tweet.enrichment && (
+        <div className="mt-1 text-xs text-gray-500 font-mono">
             {Object.entries(tweet.enrichment).map(([key, value]) => (
                 <div key={key}>
                     <span>{key}:</span>
@@ -221,8 +223,8 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
                     </a>
                     retweeted:
                 </div>
-                <Tweet tweet={tweet.retweeted_tweet} />
-                {debugBox}
+                <Tweet tweet={tweet.retweeted_tweet} isDebug={true} />
+                {isDebug && <div className="px-4 pb-4">{debugBox}</div>}
             </div>
         );
     }
@@ -295,12 +297,20 @@ export default function Tweet(props: { tweet: any; shrink?: boolean }) {
             )}
             {tweet.retweeted_tweet && (
                 <div className="border border-gray-300 rounded-lg my-2 overflow-hidden">
-                    <Tweet tweet={tweet.retweeted_tweet} shrink={true} />
+                    <Tweet
+                        tweet={tweet.retweeted_tweet}
+                        shrink={true}
+                        isDebug={true}
+                    />
                 </div>
             )}
             {tweet.quoted_tweet && (
                 <div className="border border-gray-300 rounded-lg my-2 overflow-hidden">
-                    <Tweet tweet={tweet.quoted_tweet} shrink={true} />
+                    <Tweet
+                        tweet={tweet.quoted_tweet}
+                        shrink={true}
+                        isDebug={true}
+                    />
                 </div>
             )}
             {tweet.card && <TweetCard card={tweet.card} />}
