@@ -1,5 +1,4 @@
-import { checkIfPlainRetweet } from "@/helpers";
-import { getTweetKeys } from "@/pages";
+import { checkIfPlainRetweet } from "@/utils/twitter";
 import sortBy from "lodash/sortBy";
 import Link from "next/link";
 import { useState } from "react";

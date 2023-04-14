@@ -2,7 +2,7 @@ import Head from "next/head";
 import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
 import { useRouter } from "next/router";
-import { BASE_URL } from "@/helpers";
+import { BASE_URL } from "@/utils/base_url";
 
 async function fetchTweet(id: string) {
     if (!id) {
@@ -29,7 +29,10 @@ export default function TweetPage() {
                 )}
                 {query.data && (
                     <div className="max-w-[620px] mx-auto border mt-2 border-gray-300 bg-white">
-                        <Tweet tweet={query.data.tweet.content} />
+                        <Tweet
+                            tweet={query.data.tweet.content}
+                            isDebug={false}
+                        />
                     </div>
                 )}
             </main>

@@ -3,7 +3,8 @@ import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
 import { useQueryParam, StringParam, withDefault } from "use-query-params";
 import { useMemo, useState } from "react";
-import { BASE_URL, checkIfPlainRetweet } from "@/helpers";
+import { BASE_URL } from "@/utils/base_url";
+import { checkIfPlainRetweet } from "@/utils/twitter";
 import { sortBy } from "lodash";
 
 ////////////////////////////////////////////////////////////////////////////////
