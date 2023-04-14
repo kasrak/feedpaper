@@ -4,7 +4,7 @@ import Tweet from "@/components/Tweet";
 import { useQueryParam, StringParam, withDefault } from "use-query-params";
 import { useMemo, useState } from "react";
 import { BASE_URL } from "@/utils/base_url";
-import { checkIfPlainRetweet } from "@/utils/twitter";
+import { checkIfPlainRetweet, getTweetCard } from "@/utils/twitter";
 import { sortBy } from "lodash";
 import { useLocalStorageState } from "@/utils/hooks";
 
@@ -222,6 +222,16 @@ export function getTweetKeys(tweet: ConversationItem): Array<string> {
     if (tweet.entities && tweet.entities.urls) {
         for (const url of tweet.entities.urls) {
             keys.push(url.expanded_url);
+        }
+    }
+    const tweetCard = getTweetCard(tweet);
+    if (tweetCard) {
+        // this helps with tweets that link to the same thing, but use
+        // different url shorteners.
+        const domain = tweetCard.attributes.get("domain");
+        const title = tweetCard.attributes.get("title");
+        if (domain && title) {
+            keys.push(`${domain.string_value}:${title.string_value}`);
         }
     }
     return keys;

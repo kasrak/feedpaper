@@ -1,4 +1,5 @@
-import { checkIfPlainRetweet } from "@/utils/twitter";
+import { getTweetKeys } from "@/pages";
+import { TweetCardT, checkIfPlainRetweet, getTweetCard } from "@/utils/twitter";
 import sortBy from "lodash/sortBy";
 import Link from "next/link";
 import { useState } from "react";
@@ -33,35 +34,25 @@ const supportedCardNames = new Set([
     "summary_large_image",
 ]);
 
-function TweetCard({ card }: { card: any }) {
-    if (!supportedCardNames.has(card.legacy.name)) {
+function TweetCard({ card }: { card: TweetCardT }) {
+    if (!supportedCardNames.has(card.name)) {
         // Polls are not supported.
         return null;
     }
 
-    function getValue(key: string) {
-        const match = card.legacy.binding_values.find(
-            (obj: any) => obj.key === key,
-        );
-        if (match) {
-            return match.value;
-        }
-        return null;
-    }
-
-    const url = card.legacy.url;
     const thumbnail =
-        getValue("thumbnail_image_large") || getValue("player_image");
-    const description = getValue("description");
-    const title = getValue("title");
-    const domain = getValue("domain");
+        card.attributes.get("thumbnail_image_large") ||
+        card.attributes.get("player_image");
+    const description = card.attributes.get("description");
+    const title = card.attributes.get("title");
+    const domain = card.attributes.get("domain");
 
     return (
         <a
-            href={url}
+            href={card.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="border rounded-lg flex overflow-hidden mt-3 hover:bg-slate-50"
+            className="border rounded-lg flex overflow-hidden mt-3 hover:bg-slate-50 h-28"
         >
             {thumbnail && (
                 <img
@@ -70,11 +61,13 @@ function TweetCard({ card }: { card: any }) {
                 />
             )}
             <div className="flex flex-col justify-center text-sm overflow-hidden p-4">
-                <div className="text-gray-600">
+                <div className="text-gray-600 shrink-0">
                     {domain && domain.string_value}
                 </div>
-                <div className="truncate">{title && title.string_value}</div>
-                <div className="text-gray-600">
+                <div className="truncate shrink-0">
+                    {title && title.string_value}
+                </div>
+                <div className="text-gray-600 overflow-hidden">
                     {description && description.string_value}
                 </div>
             </div>
@@ -201,16 +194,16 @@ export default function Tweet(props: {
             ))}
         </div>
     );
+    const onDoubleClick = (e: React.MouseEvent) => {
+        console.log("tweet", tweet);
+        console.log("keys", getTweetKeys(tweet));
+        // Don't also log the parent tweet.
+        e.stopPropagation();
+    };
 
     if (isPlainRetweet) {
         return (
-            <div
-                onDoubleClick={(e) => {
-                    console.log(tweet);
-                    // Don't also log the parent tweet.
-                    e.stopPropagation();
-                }}
-            >
+            <div onDoubleClick={onDoubleClick}>
                 <div className="flex pt-4 px-4 text-gray-600 mb-[-0.5em]">
                     <a
                         href={`https://twitter.com/${tweet.user.screen_name}`}
@@ -227,6 +220,8 @@ export default function Tweet(props: {
             </div>
         );
     }
+
+    const tweetCard = getTweetCard(tweet);
 
     return (
         <div
@@ -245,11 +240,7 @@ export default function Tweet(props: {
             onMouseLeave={() => {
                 setUnshrink(false);
             }}
-            onDoubleClick={(e) => {
-                console.log(tweet);
-                // Don't also log the parent tweet.
-                e.stopPropagation();
-            }}
+            onDoubleClick={onDoubleClick}
         >
             <div className="flex items-center">
                 <a
@@ -312,7 +303,7 @@ export default function Tweet(props: {
                     />
                 </div>
             )}
-            {tweet.card && <TweetCard card={tweet.card} />}
+            {tweetCard && <TweetCard card={tweetCard} />}
             {props.shrink && !unshrink && (
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.8)] pointer-events-none"></div>
             )}

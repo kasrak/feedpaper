@@ -6,3 +6,25 @@ export function checkIfPlainRetweet(tweet: any): boolean {
         );
     return result;
 }
+
+export type TweetCardT = {
+    name: string;
+    url: string;
+    attributes: Map<string, any>;
+};
+export function getTweetCard(tweet: any): TweetCardT | null {
+    if (!tweet.card) {
+        return null;
+    }
+    const card: TweetCardT = {
+        name: tweet.card.legacy.name,
+        url: tweet.card.legacy.url,
+        attributes: new Map(),
+    };
+    if (tweet.card.legacy.binding_values) {
+        for (const binding of tweet.card.legacy.binding_values) {
+            card.attributes.set(binding.key, binding.value);
+        }
+    }
+    return card;
+}
