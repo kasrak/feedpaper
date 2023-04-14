@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { BASE_URL } from "@/utils/base_url";
 import { checkIfPlainRetweet } from "@/utils/twitter";
 import { sortBy } from "lodash";
+import { useLocalStorageState } from "@/utils/hooks";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Data
@@ -476,7 +477,7 @@ export default function Home() {
         refetchOnWindowFocus: false,
     });
 
-    const [isDebug, setIsDebug] = useState(false);
+    const [isDebug, setIsDebug] = useLocalStorageState("isDebug", false);
 
     return (
         <>
