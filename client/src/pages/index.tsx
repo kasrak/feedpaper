@@ -497,7 +497,7 @@ export default function Home() {
                 <title>Feedpaper</title>
             </Head>
             <main>
-                <div className="max-w-[620px] ml-[250px] border m-2 border-gray-300 bg-white">
+                <div className="max-w-[620px] mx-auto border m-2 border-gray-300 bg-white">
                     <div className="p-4 bg-gray-50 border-b border-b-gray-300 flex gap-4">
                         <h3 className="font-semibold text-lg text-gray-800 flex-grow">
                             {date.toLocaleDateString(undefined, {
