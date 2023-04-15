@@ -3,6 +3,7 @@ import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
 import { useRouter } from "next/router";
 import { BASE_URL } from "@/utils/base_url";
+import { useLocalStorageState } from "@/utils/hooks";
 
 async function fetchTweet(id: string) {
     if (!id) {
@@ -16,6 +17,7 @@ export default function TweetPage() {
     const router = useRouter();
     const { id } = router.query;
     const query = useQuery(["tweet", id], () => fetchTweet(id as string));
+    const [isDebug] = useLocalStorageState("isDebug", false);
     return (
         <>
             <Head>
@@ -30,8 +32,11 @@ export default function TweetPage() {
                 {query.data && (
                     <div className="max-w-[620px] mx-auto border mt-2 border-gray-300 bg-white">
                         <Tweet
-                            tweet={query.data.tweet.content}
-                            isDebug={false}
+                            tweet={{
+                                ...query.data.tweet.content,
+                                enrichment: query.data.tweet.enrichment,
+                            }}
+                            isDebug={isDebug}
                         />
                     </div>
                 )}

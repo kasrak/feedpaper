@@ -101,6 +101,16 @@ const goal = {
     "1645916773726969856": {
         refs: ["prompt injection"],
     },
+    "1646964864844283904": {
+        refs: [
+            "Midjourney",
+            "Stable Diffusion XL",
+            "ControlNet",
+            "Dreambooth",
+            "LoRa",
+        ],
+        mainEntity: "Midjourney",
+    },
 };
 
 function getDiff(
@@ -125,7 +135,7 @@ const dbSchema = {
 
 const getItems = traceCached(async function getItems() {
     return await sqlQuery(
-        "SELECT * FROM items WHERE created_at > '2023-04-13' AND created_at < '2023-04-14' AND content->'is_promoted' = 'false'",
+        "SELECT * FROM items WHERE created_at > '2023-04-14' AND created_at < '2023-04-15' AND content->'is_promoted' = 'false'",
         [],
         dbSchema.items,
     );
@@ -226,15 +236,15 @@ classify(id: number, text: string): {
 
 Example input:
 classify(2, "Came across an old pic of ~4 year old me and this is probably the coolest I've ever been.")
-classify(3, "seems like GPT-4 can output patch files to edit part of an existing file; more efficient than regenerating from scratch!")
-classify(4, "Microsoft releases DeepSpeed chat, a framework to fine tune / run multi-node RLHF on models up to 175B parameters")
-classify(5, "Read the reddit thread on Ozempic improving people's impulse control broadly. Now consider: what are the downstream implications of a society with greater impulse control?")
+classify(3, "Microsoft releases DeepSpeed chat, a framework to fine tune / run multi-node RLHF on models up to 175B parameters")
+classify(4, "Read the reddit thread on Ozempic improving people's impulse control broadly. Now consider: what are the downstream implications of a society with greater impulse control?")
+classify(5, "That said, it feels likely that Midjourney is on a trajectory to ‘win’ the AI image gen market QT: QT: @peteromallet: Stable Diffusion XL is the most interesting release in AI - combined with ControlNet, Dreambooth/LoRa + other innovations")
 
 Example output:
 {"id":2,"entities":[],"mainEntity":null}
-{"id":3,"entities":["GPT-4"],"mainEntity":"GPT-4"}
-{"id":4,"entities":["Microsoft", "DeepSpeed chat","RLHF"],"mainEntity":"DeepSpeed chat"}
-{"id":5,"entities":["Ozempic", "reddit"],"mainEntity":"Ozempic"}
+{"id":3,"entities":["Microsoft", "DeepSpeed chat","RLHF"],"mainEntity":"DeepSpeed chat"}
+{"id":4,"entities":["Ozempic", "reddit"],"mainEntity":"Ozempic"}
+{"id":5,"entities":["Midjourney", "Stable Diffusion XL", "ControlNet", "Dreambooth", "LoRa"],"mainEntity":"Midjourney"}
 
 Only return the json output, no extra commentary`.trim();
 
