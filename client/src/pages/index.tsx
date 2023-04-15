@@ -412,12 +412,6 @@ function ConversationsList(props: {
     items: Array<ConversationItem>;
     isDebug: boolean;
 }) {
-    if (props.items.length === 0) {
-        return (
-            <div className="flex items-center justify-center p-4">No items</div>
-        );
-    }
-
     const conversations = useMemo(() => {
         return getConversations(
             props.items.map((item) => ({
@@ -426,6 +420,12 @@ function ConversationsList(props: {
             })),
         );
     }, [props.items]);
+
+    if (props.items.length === 0) {
+        return (
+            <div className="flex items-center justify-center p-4">No items</div>
+        );
+    }
 
     const debugConversation = (conversation: Conversation) => {
         const similarConversations = sortBy(
