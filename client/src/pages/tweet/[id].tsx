@@ -9,7 +9,7 @@ async function fetchTweet(id: string) {
     if (!id) {
         return null;
     }
-    const res = await fetch(`${BASE_URL}/getItem?tweet_id=${id}`);
+    const res = await fetch(`${BASE_URL}/api/getItem?tweet_id=${id}`);
     return res.json();
 }
 
@@ -33,8 +33,8 @@ export default function TweetPage() {
                     <div className="max-w-[620px] mx-auto border mt-2 border-gray-300 bg-white">
                         <Tweet
                             tweet={{
-                                ...query.data.tweet.content,
-                                enrichment: query.data.tweet.enrichment,
+                                ...query.data.item.content,
+                                enrichment: query.data.item.enrichment,
                             }}
                             isDebug={isDebug}
                         />

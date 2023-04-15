@@ -312,7 +312,9 @@ function getConversations(items: Array<ConversationItem>) {
 async function getItems(date: Date) {
     const start = toIsoDate(new Date(date.getTime() - 24 * 60 * 60 * 1000));
     const end = toIsoDate(date);
-    const res = await fetch(`${BASE_URL}/getItems?start=${start}&end=${end}`);
+    const res = await fetch(
+        `${BASE_URL}/api/getItems?start=${start}&end=${end}`,
+    );
     return res.json();
 }
 

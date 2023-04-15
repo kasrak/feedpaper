@@ -1,3 +1,6 @@
+import express from "express";
+import cors from "cors";
+
 const http = require("http");
 const { run, all, jsonValue, datetimeValue } = require("./db");
 
@@ -24,77 +27,51 @@ function respondJson(res, statusCode, data) {
 }
 
 export async function startServer() {
-    const server = http.createServer(async (req, res) => {
-        // Allow CORS
-        res.setHeader("Access-Control-Allow-Origin", "*");
+    function formatItem(row) {
+        return {
+            ...row,
+            created_at: datetimeValue(row["created_at"]),
+            content: jsonValue(row["content"]),
+            enrichment: jsonValue(row["enrichment"]),
+        };
+    }
 
-        try {
-            if (req.method === "POST") {
-                const body = await getBodyJson(req);
-                switch (body.cmd) {
-                    case "saveTweets": {
-                        const { tweets } = body.args;
-                        for (const tweet of tweets) {
-                            // TODO: batch this upsert
-                            const result = await run(
-                                "INSERT INTO items (tweet_id, content)" +
-                                    " VALUES ($1, $2)" +
-                                    " ON CONFLICT (tweet_id)" +
-                                    " DO UPDATE SET content = $2",
-                                [tweet.id, JSON.stringify(tweet)],
-                            );
-                        }
-                        respondJson(res, 200, { ok: true });
-                        break;
-                    }
-                    default:
-                        respondJson(res, 400, { error: "Bad cmd" });
-                }
-            } else {
-                function toItem(row) {
-                    return {
-                        ...row,
-                        created_at: datetimeValue(row["created_at"]),
-                        content: jsonValue(row["content"]),
-                        enrichment: jsonValue(row["enrichment"]),
-                    };
-                }
-
-                const url = new URL(req.url, SERVER_URL);
-                switch (url.pathname) {
-                    case "/getItems": {
-                        const items = await all(
-                            `SELECT * FROM items
+    const server = express();
+    server.use(cors());
+    server.use(express.json({ limit: "50mb" }));
+    server.post("/api/saveItems", async (req, res) => {
+        const { items } = req.body;
+        for (const item of items) {
+            await run(
+                "INSERT INTO items (tweet_id, content)" +
+                    " VALUES ($1, $2)" +
+                    " ON CONFLICT (tweet_id)" +
+                    " DO UPDATE SET content = $2",
+                [item.id, JSON.stringify(item)],
+            );
+        }
+        res.json({ ok: true });
+    });
+    server.get("/api/getItems", async (req, res) => {
+        const items = await all(
+            `SELECT * FROM items
                     WHERE created_at > $1 AND created_at < $2
                     AND content->'is_promoted' = 'false'
                     ORDER BY created_at, content->'id' ASC`,
-                            [
-                                url.searchParams.get("start"),
-                                url.searchParams.get("end"),
-                            ],
-                            toItem,
-                        );
-                        respondJson(res, 200, { items: items });
-                        break;
-                    }
-                    case "/getItem": {
-                        const items = await all(
-                            "SELECT * FROM items WHERE tweet_id = $1",
-                            [url.searchParams.get("tweet_id")],
-                            toItem,
-                        );
-                        respondJson(res, 200, { tweet: items[0] });
-                        break;
-                    }
-                    default:
-                        respondJson(res, 400, { error: "Bad path" });
-                }
-            }
-        } catch (e) {
-            respondJson(res, 500, { error: e.toString() });
-        }
+            [req.query["start"], req.query["end"]],
+            formatItem,
+        );
+        res.json({ items });
     });
-    server.listen(PORT, HOSTNAME, () => {
+    server.get("/api/getItem", async (req, res) => {
+        const items = await all(
+            "SELECT * FROM items WHERE tweet_id = $1",
+            [req.query["tweet_id"]],
+            formatItem,
+        );
+        res.json({ item: items[0] });
+    });
+    server.listen(PORT, () => {
         console.log(`Server running at ${SERVER_URL}`);
     });
 }

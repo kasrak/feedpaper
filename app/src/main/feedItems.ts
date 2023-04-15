@@ -43,25 +43,22 @@ export async function saveFeedItemsFromResponse(
     }
 
     const bodyParsed = JSON.parse(response.body);
-    let tweets = getTweetsFromInstructions(
+    let items = getTweetsFromInstructions(
         bodyParsed.data.home.home_timeline_urt.instructions,
     );
 
-    const res = await fetch(serverBaseUrl, {
+    const res = await fetch(`${serverBaseUrl}/api/saveItems`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            cmd: "saveTweets",
-            args: {
-                tweets,
-            },
+            items,
         }),
     });
 
     if (res.ok) {
-        console.log(`Saved ${tweets.length} tweets`);
+        console.log(`Saved ${items.length} tweets`);
     } else {
         console.error("Failed to save tweets:", res.status, res.statusText);
     }
