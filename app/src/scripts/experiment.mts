@@ -126,7 +126,7 @@ function getDiff(
 
 const dbSchema = {
     items: (row) => ({
-        tweet_id: row.tweet_id,
+        id: row.id,
         created_at: sqlDate(row.created_at),
         content: sqlJson(row.content),
         enrichment: sqlJson(row.enrichment),
@@ -299,16 +299,16 @@ async function main() {
     const tweetIdByShortId = new Map();
     let itemsForPrompt: Array<string> = [];
     for (const tweet of items) {
-        // if (!goal[tweet.tweet_id]) {
+        // if (!goal[tweet.id]) {
         //     continue;
         // }
 
         const shortId = itemsForPrompt.length;
-        tweetIdByShortId.set(shortId, tweet.tweet_id);
+        tweetIdByShortId.set(shortId, tweet.id);
 
         const tweetString = tweetToString(tweet.content).replace(/\n/g, " ");
-        results[tweet.tweet_id] = {
-            longId: tweet.tweet_id,
+        results[tweet.id] = {
+            longId: tweet.id,
             shortId,
             tweetString,
         };
@@ -380,7 +380,7 @@ async function main() {
                         ]);
                     }
                     await sqlRun(
-                        "UPDATE items SET enrichment = $1 WHERE tweet_id = $2",
+                        "UPDATE items SET enrichment = $1 WHERE id = $2",
                         [JSON.stringify({ mainEntity, entities }), tweetId],
                     );
                 }

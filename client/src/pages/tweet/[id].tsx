@@ -9,7 +9,7 @@ async function fetchTweet(id: string) {
     if (!id) {
         return null;
     }
-    const res = await fetch(`${BASE_URL}/api/getItem?tweet_id=${id}`);
+    const res = await fetch(`${BASE_URL}/api/getItem?id=${id}`);
     return res.json();
 }
 

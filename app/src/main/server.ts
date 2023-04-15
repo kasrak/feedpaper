@@ -43,9 +43,9 @@ export async function startServer() {
         const { items } = req.body;
         for (const item of items) {
             await run(
-                "INSERT INTO items (tweet_id, content)" +
+                "INSERT INTO items (id, content)" +
                     " VALUES ($1, $2)" +
-                    " ON CONFLICT (tweet_id)" +
+                    " ON CONFLICT (id)" +
                     " DO UPDATE SET content = $2",
                 [item.id, JSON.stringify(item)],
             );
@@ -57,7 +57,7 @@ export async function startServer() {
             `SELECT * FROM items
                     WHERE created_at > $1 AND created_at < $2
                     AND content->'is_promoted' = 'false'
-                    ORDER BY created_at, content->'id' ASC`,
+                    ORDER BY created_at, id ASC`,
             [req.query["start"], req.query["end"]],
             formatItem,
         );
@@ -65,8 +65,8 @@ export async function startServer() {
     });
     server.get("/api/getItem", async (req, res) => {
         const items = await all(
-            "SELECT * FROM items WHERE tweet_id = $1",
-            [req.query["tweet_id"]],
+            "SELECT * FROM items WHERE id = $1",
+            [req.query["id"]],
             formatItem,
         );
         res.json({ item: items[0] });
