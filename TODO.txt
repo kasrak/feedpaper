@@ -8,7 +8,6 @@
 - if last link is to quoted/retweeted tweet, remove it from text: http://localhost:3000/tweet/1641563370431164416
 - if the tweet is just a link to another tweet, don't show the link in text: http://localhost:3000/tweet/1646368688189186054
 - "show more" for note_tweets hides media (extended_entities?): http://localhost:3000/tweet/1641482810266648576
-- don't repeat multiple plain retweets
 - improve sorting, e.g. http://localhost:3000/?date=2023-04-13 "databricks"
 - merge related clusters (fix greedy bug)
 - use GPT to summarize clusters with 3+ tweets

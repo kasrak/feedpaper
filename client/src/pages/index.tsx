@@ -67,20 +67,33 @@ let conversationId = 0;
 // thing
 class Conversation {
     id: number;
-    keys: Set<string>;
+
     items: Array<ConversationItem>;
+    itemIds: Set<string>;
+
+    keys: Set<string>;
     mainEntities: CountSet;
     allEntities: CountSet;
+
     _dedupedItems: Array<ConversationItem> | null = null;
     constructor() {
         this.id = conversationId++;
-        this.keys = new Set();
+
         this.items = [];
+        this.itemIds = new Set();
+
+        this.keys = new Set();
         this.mainEntities = new CountSet();
         this.allEntities = new CountSet();
     }
     addItem(item: ConversationItem, keys: Array<string>) {
+        if (this.itemIds.has(item.id)) {
+            return;
+        }
+
         this._dedupedItems = null;
+
+        this.itemIds.add(item.id);
         this.items.push(item);
         for (const key of keys) {
             this.keys.add(key);
@@ -265,19 +278,24 @@ function getConversations(items: Array<ConversationItem>) {
     let conversations: Array<Conversation> = [];
     for (const item of items) {
         const keys = getTweetKeys(item);
-        let foundConversation = false;
+        let foundConversation: Conversation | undefined;
         for (const conversation of conversations) {
             if (setContains(conversation.keys, keys)) {
-                foundConversation = true;
-                conversation.addItem(item, keys);
+                foundConversation = conversation;
                 break;
             }
         }
         if (!foundConversation) {
-            const conversation = new Conversation();
-            conversations.push(conversation);
-            conversation.addItem(item, keys);
+            foundConversation = new Conversation();
+            conversations.push(foundConversation);
         }
+        if (item.retweeted_tweet) {
+            foundConversation.addItem(item.retweeted_tweet, keys);
+        }
+        if (item.quoted_tweet) {
+            foundConversation.addItem(item.quoted_tweet, keys);
+        }
+        foundConversation.addItem(item, keys);
     }
 
     // First sort by number of users involved as an initial heuristic for
