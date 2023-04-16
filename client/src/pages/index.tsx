@@ -36,12 +36,12 @@ function setContains<T>(set: Set<T>, array: Array<T>): boolean {
 type ConversationItem = any;
 
 class CountSet {
-    map: Map<string, number> = new Map();
+    _map: Map<string, number> = new Map();
     add(key: string) {
-        this.map.set(key, (this.map.get(key) || 0) + 1);
+        this._map.set(key, (this._map.get(key) || 0) + 1);
     }
     has(key: string): boolean {
-        return this.map.has(key);
+        return this._map.has(key);
     }
     getMostCommon(max: number): Array<string> {
         return this.getEntries()
@@ -49,16 +49,22 @@ class CountSet {
             .map((a) => a[0]);
     }
     getEntries(): Array<[string, number]> {
-        const entries = Array.from(this.map.entries()).sort(
+        const entries = Array.from(this._map.entries()).sort(
             (a, b) => b[1] - a[1],
         );
         return entries;
     }
+    map(fn: (entry: [key: string, count: number]) => any): Array<any> {
+        return this.getEntries().map(fn);
+    }
+    get size(): number {
+        return this._map.size;
+    }
 }
 
 let conversationId = 0;
-// A Conversation is a set of related tweets that are all talking about the same
-// thing.
+// A Conversation is a set of related  that are all talking about the same
+// thing
 class Conversation {
     id: number;
     keys: Set<string>;
@@ -114,8 +120,15 @@ class Conversation {
         }
         return this._dedupedItems;
     }
-    getUserCount(): number {
-        return new Set(this.items.flatMap((item) => getTweetUsers(item))).size;
+    getSources(): CountSet {
+        const sources = new CountSet();
+        for (const item of this.items) {
+            const itemSources = getTweetUsers(item);
+            for (const source of itemSources) {
+                sources.add(source);
+            }
+        }
+        return sources;
     }
     toString(): string {
         return JSON.stringify(this.mainEntities.getEntries());
@@ -271,7 +284,7 @@ function getConversations(items: Array<ConversationItem>) {
     // interestingness.
     conversations = sortBy(
         conversations,
-        (conversation) => -conversation.getUserCount(),
+        (conversation) => -conversation.getSources().size,
     );
 
     // Now order so related conversations are closer together.
@@ -396,11 +409,19 @@ function ConversationItems(props: {
                 ) : (
                     <div>
                         <button
-                            className="font-semibold text-sky-600 px-4 py-2"
+                            className="flex items-center px-4 py-2 overflow-hidden w-full text-left"
                             onClick={() => setExpanded(true)}
                         >
-                            Show {items.length - itemsToShowWhenCollapsed}{" "}
-                            more...
+                            <span className="font-semibold text-sky-600 flex-grow whitespace-nowrap mr-4">
+                                Show {items.length - itemsToShowWhenCollapsed}{" "}
+                                more...
+                            </span>
+                            <span className="truncate text-sm text-gray-400">
+                                {conversation
+                                    .getSources()
+                                    .map(([source]) => `@${source}`)
+                                    .join(", ")}
+                            </span>
                         </button>
                     </div>
                 ))}
@@ -442,7 +463,7 @@ function ConversationsList(props: {
             "all entities",
             JSON.stringify(conversation.allEntities.getEntries()),
         );
-        console.log("user count", conversation.getUserCount());
+        console.log("user count", conversation.getSources());
         console.log("related conversations:");
         console.table(
             similarConversations
