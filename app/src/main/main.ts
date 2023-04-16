@@ -4,7 +4,7 @@ import { app, BrowserView, BrowserWindow, shell, ipcMain } from "electron";
 import { is } from "electron-util";
 import terminate from "./terminate";
 import { saveFeedItemsFromResponse, shouldWatchRequest } from "./feedItems";
-import { SERVER_URL, startServer } from "./server";
+import { BACKEND_BASE_URL, FRONTEND_BASE_URL, startServer } from "./server";
 
 process.on("unhandledRejection", (reason, promise) => {
     console.log("Unhandled Rejection at:", promise, "reason:", reason);
@@ -149,7 +149,7 @@ async function createWindow() {
                                     requestId: params.requestId,
                                 },
                             );
-                        saveFeedItemsFromResponse(response, SERVER_URL);
+                        saveFeedItemsFromResponse(response, BACKEND_BASE_URL);
                     }
                     break;
                 }
@@ -158,7 +158,7 @@ async function createWindow() {
     );
     twitterBrowserView.webContents.debugger.sendCommand("Network.enable");
 
-    clientBrowserView.webContents.loadURL("http://localhost:3000");
+    clientBrowserView.webContents.loadURL(FRONTEND_BASE_URL);
 
     mainWindow.setTopBrowserView(clientBrowserView);
     mainWindow.webContents.send("selected-tab-changed", { tab: "feedpaper" });

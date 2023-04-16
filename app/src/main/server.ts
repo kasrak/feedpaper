@@ -1,12 +1,18 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
+import proxy from "express-http-proxy";
 
 const { run, all, jsonValue, datetimeValue } = require("./db");
 
 const HOSTNAME = "0.0.0.0";
-export const PORT = 2345;
-export const SERVER_URL = `http://${HOSTNAME}:${PORT}`;
+const BACKEND_PORT = 2345;
+export const BACKEND_BASE_URL = `http://${HOSTNAME}:${BACKEND_PORT}`;
+
+const isDev = process.env.NODE_ENV === "development";
+export const FRONTEND_BASE_URL = isDev
+    ? `http://localhost:2346`
+    : BACKEND_BASE_URL;
 
 export async function startServer() {
     function formatItem(row) {
@@ -57,9 +63,14 @@ export async function startServer() {
         res.json({ item: items[0] });
     });
 
-    server.use(express.static(path.join(__dirname, "..", "client")));
+    if (!isDev) {
+        // In dist build, serve static files from ../client
+        const staticDir = path.join(__dirname, "..", "client");
+        console.log(`Serving static files from ${staticDir}`);
+        server.use(express.static(staticDir));
+    }
 
-    server.listen(PORT, () => {
-        console.log(`Server running at ${SERVER_URL}`);
+    server.listen(BACKEND_PORT, () => {
+        console.log(`Backend server running at ${BACKEND_BASE_URL}`);
     });
 }
