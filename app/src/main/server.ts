@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 
 const { run, all, jsonValue, datetimeValue } = require("./db");
 
@@ -55,6 +56,8 @@ export async function startServer() {
         );
         res.json({ item: items[0] });
     });
+
+    server.use(express.static(path.join(__dirname, "..", "client")));
 
     server.listen(PORT, () => {
         console.log(`Server running at ${SERVER_URL}`);

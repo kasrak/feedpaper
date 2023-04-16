@@ -257,7 +257,7 @@ export default function Tweet(props: {
                     </small>
                 </a>
                 <span className="mx-1">
-                    <Link href={`/item?id=${tweet.id}`}>·</Link>
+                    <Link href={`/item.html?id=${tweet.id}`}>·</Link>
                 </span>
                 <a
                     href={`https://twitter.com/${tweet.user.screen_name}/status/${tweet.id}`}
