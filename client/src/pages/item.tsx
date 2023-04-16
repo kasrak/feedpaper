@@ -13,7 +13,7 @@ async function fetchTweet(id: string) {
     return res.json();
 }
 
-export default function TweetPage() {
+export default function ItemPage() {
     const router = useRouter();
     const { id } = router.query;
     const query = useQuery(["tweet", id], () => fetchTweet(id as string));
