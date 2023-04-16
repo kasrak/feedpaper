@@ -116,18 +116,29 @@ class Conversation {
                 (item) => `${new Date(item.created_at).getTime()}${item.id}`,
             );
             const dedupedItems: Array<ConversationItem> = [];
-            const ids = new Set<string>();
+            const dedupedItemsById: Map<string, ConversationItem> = new Map();
             for (const item of allItems) {
                 // filter out retweets if original tweet is in items
                 if (
                     item.retweeted_tweet &&
-                    ids.has(item.retweeted_tweet.id) &&
+                    dedupedItemsById.has(item.retweeted_tweet.id) &&
                     checkIfPlainRetweet(item)
                 ) {
-                    continue;
+                    const originalTweet = dedupedItemsById.get(
+                        item.retweeted_tweet.id,
+                    )!;
+                    if (originalTweet.retweeted_by) {
+                        originalTweet.retweeted_by.push(item.user);
+                    } else {
+                        originalTweet.retweeted_by = [item.user];
+                    }
+                } else {
+                    // Make a copy because we might modify item.retweeted_by if
+                    // we encounter retweets.
+                    const itemCopy = { ...item };
+                    dedupedItemsById.set(item.id, itemCopy);
+                    dedupedItems.push(itemCopy);
                 }
-                dedupedItems.push(item);
-                ids.add(item.id);
             }
             this._dedupedItems = dedupedItems;
         }

@@ -2,6 +2,7 @@ import { getTweetKeys } from "@/pages";
 import { TweetCardT, checkIfPlainRetweet, getTweetCard } from "@/utils/twitter";
 import sortBy from "lodash/sortBy";
 import Link from "next/link";
+import React from "react";
 import { useState } from "react";
 
 function Mention({ name, screen_name }: { name: string; screen_name: string }) {
@@ -182,8 +183,6 @@ export default function Tweet(props: {
     const [showNote, setShowNote] = useState(false);
     const [unshrink, setUnshrink] = useState(false);
 
-    const isPlainRetweet = checkIfPlainRetweet(tweet);
-
     const debugBox = isDebug && tweet.enrichment && (
         <div className="mt-1 text-xs text-gray-500 font-mono">
             {Object.entries(tweet.enrichment).map(([key, value]) => (
@@ -197,29 +196,9 @@ export default function Tweet(props: {
     const onDoubleClick = (e: React.MouseEvent) => {
         console.log("tweet", tweet);
         console.log("keys", getTweetKeys(tweet));
-        // Don't also log the parent tweet.
+        // Don't also log the parent tweet in case we're a quoted tweet.
         e.stopPropagation();
     };
-
-    if (isPlainRetweet) {
-        return (
-            <div onDoubleClick={onDoubleClick}>
-                <div className="flex pt-4 px-4 text-gray-600 mb-[-0.5em]">
-                    <a
-                        href={`https://twitter.com/${tweet.user.screen_name}`}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="flex items-center hover:underline mr-1"
-                    >
-                        <span className="font-medium">{tweet.user.name}</span>
-                    </a>
-                    retweeted:
-                </div>
-                <Tweet tweet={tweet.retweeted_tweet} isDebug={true} />
-                {isDebug && <div className="px-4 pb-4">{debugBox}</div>}
-            </div>
-        );
-    }
 
     const tweetCard = getTweetCard(tweet);
 
@@ -242,6 +221,24 @@ export default function Tweet(props: {
             }}
             onDoubleClick={onDoubleClick}
         >
+            {tweet.retweeted_by && (
+                <div className="flex text-gray-600 pb-1">
+                    {tweet.retweeted_by.map((user: any, i: number) => (
+                        <React.Fragment key={i}>
+                            {i > 0 && <span className="mr-1">, </span>}
+                            <a
+                                href={`https://twitter.com/${user.screen_name}`}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="flex items-center hover:underline"
+                            >
+                                <span className="font-medium">{user.name}</span>
+                            </a>
+                        </React.Fragment>
+                    ))}
+                    <span className="ml-1">retweeted</span>
+                </div>
+            )}
             <div className="flex items-center">
                 <a
                     href={`https://twitter.com/${tweet.user.screen_name}`}
@@ -270,20 +267,16 @@ export default function Tweet(props: {
                     </small>
                 </a>
             </div>
-            {!isPlainRetweet && (
-                <>
-                    <div className="whitespace-pre-wrap break-words">
-                        {getText(tweet, { showNote })}{" "}
-                    </div>
-                    {tweet.note_tweet && (
-                        <button
-                            className="text-sky-600"
-                            onClick={() => setShowNote(!showNote)}
-                        >
-                            Show{showNote ? " less" : " more"}
-                        </button>
-                    )}
-                </>
+            <div className="whitespace-pre-wrap break-words">
+                {getText(tweet, { showNote })}{" "}
+            </div>
+            {tweet.note_tweet && (
+                <button
+                    className="text-sky-600"
+                    onClick={() => setShowNote(!showNote)}
+                >
+                    Show{showNote ? " less" : " more"}
+                </button>
             )}
             {tweet.retweeted_tweet && (
                 <div className="border border-gray-300 rounded-lg my-2 overflow-hidden">
