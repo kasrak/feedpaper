@@ -8,7 +8,8 @@
     "scripts": {
         "dev": "electron-esbuild dev",
         "build": "electron-esbuild build",
-        "package": "electron-builder"
+        "package": "electron-builder",
+        "script": "ts-node --project tsconfig.json --esm"
     },
     "devDependencies": {
         "@types/express": "^4.17.17",

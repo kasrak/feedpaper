@@ -135,7 +135,7 @@ const dbSchema = {
 
 const getItems = traceCached(async function getItems() {
     return await sqlQuery(
-        "SELECT * FROM items WHERE created_at > '2023-04-14' AND created_at < '2023-04-15' AND content->'is_promoted' = 'false'",
+        "SELECT * FROM items WHERE created_at > '2023-04-15' AND created_at < '2023-04-16' AND content->'is_promoted' = 'false'",
         [],
         dbSchema.items,
     );
