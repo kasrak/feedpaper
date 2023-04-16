@@ -1,5 +1,6 @@
 import { getTweetKeys } from "@/pages";
 import { TweetCardT, checkIfPlainRetweet, getTweetCard } from "@/utils/twitter";
+import { groupBy } from "lodash";
 import sortBy from "lodash/sortBy";
 import Link from "next/link";
 import React from "react";
@@ -24,7 +25,7 @@ function Media({ entity }: { entity: any }) {
         <img
             src={entity.media_url_https}
             alt={entity.display_url}
-            className="rounded mt-2 w-1/2 max-h-72 object-contain border border-gray-200"
+            className="rounded mt-2 w-1/2 max-h-72 object-cover object-left-top border border-gray-200"
         />
     );
 }
@@ -109,67 +110,66 @@ const getText = (data: any, opts: { showNote: boolean }) => {
     const entities =
         note_tweet && opts.showNote ? note_tweet.entity_set : data.entities;
 
-    const mergedEntities = sortBy(
-        [
-            ...entities.urls.map((url: any) => ({
-                type: "url",
-                ...url,
-            })),
-            ...entities.user_mentions.map((user_mention: any) => ({
-                type: "user_mention",
-                ...user_mention,
-            })),
-            // TODO: also look at extended_media for alt text and mp4s
-            ...(entities.media || []).map((media: any) => ({
-                type: "media",
-                ...media,
-            })),
-        ],
-        (entity) => entity.indices[0],
-    );
-
     // The entities have indices into the full text, but they seem to be
     // off when there are multiple entities. I'm not sure how they're counting
     // indices, so we just replace text matches instead.
-    mergedEntities.forEach((entity, i) => {
-        switch (entity.type) {
-            case "user_mention":
-                textParts = replaceFirst(
-                    textParts,
-                    `@${entity.screen_name}`,
-                    <Mention
-                        key={i}
-                        name={entity.name}
-                        screen_name={entity.screen_name}
-                    />,
-                );
-                break;
-            case "photo":
-                textParts = replaceFirst(
-                    textParts,
-                    entity.url,
-                    <Media key={i} entity={entity} />,
-                );
-                break;
-            case "url":
-                textParts = replaceFirst(
-                    textParts,
-                    entity.url,
-                    <a
-                        key={i}
-                        href={entity.expanded_url}
-                        className="text-sky-600 hover:underline"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        {entity.display_url}
-                    </a>,
-                );
-                break;
-            default:
-                console.warn("Unknown entity type", entity);
+    let i = 0;
+    for (const entity of entities.urls) {
+        textParts = replaceFirst(
+            textParts,
+            entity.url,
+            <a
+                key={i++}
+                href={entity.expanded_url}
+                className="text-sky-600 hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                {entity.display_url}
+            </a>,
+        );
+    }
+    for (const entity of entities.user_mentions) {
+        textParts = replaceFirst(
+            textParts,
+            `@${entity.screen_name}`,
+            <Mention
+                key={i++}
+                name={entity.name}
+                screen_name={entity.screen_name}
+            />,
+        );
+    }
+
+    // Merge media entities with extended media entities.
+    const extendedMedia = data.extended_entities?.media || [];
+    const mediaById = new Map<string, any>();
+    for (const m of entities.media || []) {
+        mediaById.set(m.id_str, {
+            ...m,
+            ...extendedMedia.find((xm: any) => xm.id_str === m.id_str),
+        });
+    }
+    for (const m of extendedMedia) {
+        if (!mediaById.has(m.id_str)) {
+            mediaById.set(m.id_str, m);
         }
-    });
+    }
+    const mediaByUrl: Record<string, Array<any>> = groupBy(
+        Array.from(mediaById.values()),
+        (m: any) => m.url,
+    );
+    for (const [url, media] of Object.entries(mediaByUrl)) {
+        textParts = replaceFirst(
+            textParts,
+            url,
+            <div className="flex gap-1 overflow-auto" key={i++}>
+                {media.map((m) => (
+                    <Media key={i++} entity={m} />
+                ))}
+            </div>,
+        );
+    }
     return <>{textParts}</>;
 };
 
