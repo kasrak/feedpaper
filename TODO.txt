@@ -1,29 +1,21 @@
-- standalone app
-    - run "client" in electron app so there's only 1 thing to launch
-    - code clean up: save tweets directly from main process, instead of HTTP POST
-    - run enrichment script automatically
-    - open tweets in dedicated twitter tab (and separate from bg fetch twitter tab)
-    - bootstrap sqlite db schema and prepare for migrations (https://github.com/kriasoft/node-sqlite)
-
-- better item rendering
-    - click to expand media
-    - animated gifs/videos
-    - multi-image http://localhost:3000/tweet/1640585475944505345 http://localhost:3000/tweet/1641852901713915904
-    - if last link is to quoted/retweeted tweet, remove it from text: http://localhost:3000/tweet/1641563370431164416
-    - if the tweet is just a link to another tweet, don't show the link in text: http://localhost:3000/tweet/1646368688189186054
-    - "show more" for note_tweets hides media (extended_entities?): http://localhost:3000/tweet/1641482810266648576
-
-- better clustering
-    - better sorting, e.g. http://localhost:3000/?date=2023-04-13 "databricks"
-    - don't repeat multiple plain retweets
-    - merge related clusters (fix greedy bug)
-    - use GPT to summarize clusters with 3+ tweets
-    - omit plain retweets if original tweet was in yesterday's digest
-    - pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
-
-- feed experience
-    - remember scroll position per day **
-    - dark mode
+- run enrichment script automatically
+- bootstrap sqlite db schema and prepare for migrations (https://github.com/kriasoft/node-sqlite)
+- don't pull focus when app runs scraping
+- open tweets in dedicated twitter tab (and separate from bg fetch twitter tab)
+- click to expand media
+- animated gifs/videos
+- multi-image http://localhost:3000/tweet/1640585475944505345 http://localhost:3000/tweet/1641852901713915904
+- if last link is to quoted/retweeted tweet, remove it from text: http://localhost:3000/tweet/1641563370431164416
+- if the tweet is just a link to another tweet, don't show the link in text: http://localhost:3000/tweet/1646368688189186054
+- "show more" for note_tweets hides media (extended_entities?): http://localhost:3000/tweet/1641482810266648576
+- don't repeat multiple plain retweets
+- improve sorting, e.g. http://localhost:3000/?date=2023-04-13 "databricks"
+- merge related clusters (fix greedy bug)
+- use GPT to summarize clusters with 3+ tweets
+- omit plain retweets if original tweet was in yesterday's digest
+- pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
+- remember scroll position per day **
+- dark mode
 
 - demo notes
     - first: 24-hour tape delay
