@@ -1,10 +1,18 @@
 import { getTweetKeys } from "@/pages";
 import { TweetCardT, checkIfPlainRetweet, getTweetCard } from "@/utils/twitter";
 import { groupBy } from "lodash";
-import sortBy from "lodash/sortBy";
 import Link from "next/link";
 import React from "react";
 import { useState } from "react";
+import { HeartIcon } from "@heroicons/react/20/solid";
+
+function formatNumber(n: number): string {
+    if (n < 1000) {
+        return n.toLocaleString();
+    } else {
+        return (n / 1000).toFixed(1) + "K";
+    }
+}
 
 function Mention({ name, screen_name }: { name: string; screen_name: string }) {
     return (
@@ -239,34 +247,21 @@ export default function Tweet(props: {
                     <span className="ml-1">retweeted</span>
                 </div>
             )}
-            <div className="flex items-center">
-                <a
-                    href={`https://twitter.com/${tweet.user.screen_name}`}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="flex items-center hover:underline overflow-hidden"
-                >
-                    <span className="font-medium truncate">
-                        {tweet.user.name}
-                    </span>
-                    <small className="ml-1 text-gray-600">
-                        @{tweet.user.screen_name}
-                    </small>
-                </a>
-                <span className="mx-1">
-                    <Link href={`/item.html?id=${tweet.id}`}>·</Link>
-                </span>
-                <a
-                    href={`https://twitter.com/${tweet.user.screen_name}/status/${tweet.id}`}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="hover:underline"
-                >
-                    <small className="text-gray-600">
-                        {new Date(tweet.created_at).toLocaleDateString()}
-                    </small>
-                </a>
-            </div>
+            <a
+                href={`https://twitter.com/${tweet.user.screen_name}/status/${tweet.id}`}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="flex items-center hover:bg-[rgba(138,189,226,0.33)] rounded-sm px-1 py-0.5 mx-[-0.25rem]"
+            >
+                <span className="font-medium truncate">{tweet.user.name}</span>
+                <small className="ml-1 text-gray-600">
+                    @{tweet.user.screen_name}
+                </small>
+                <span className="mx-1">·</span>
+                <small className="text-gray-600">
+                    {new Date(tweet.created_at).toLocaleDateString()}
+                </small>
+            </a>
             <div className="whitespace-pre-wrap break-words">
                 {getText(tweet, { showNote })}{" "}
             </div>
@@ -300,6 +295,10 @@ export default function Tweet(props: {
             {props.shrink && !unshrink && (
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(255,255,255,0.8)] pointer-events-none"></div>
             )}
+            <div className="flex items-center text-gray-500 mt-1">
+                <HeartIcon className="w-4 h-4 mr-1" />
+                {formatNumber(tweet.favorite_count + tweet.retweet_count)}
+            </div>
             {debugBox}
         </div>
     );
