@@ -12,7 +12,7 @@
 - improve sorting, e.g. http://localhost:3000/?date=2023-04-13 "databricks"
 - merge related clusters (fix greedy bug)
 - use GPT to summarize clusters with 3+ tweets
-- pull in original tweet for replies, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
+- pull in original tweet for replies & quotes, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
 - remember scroll position per day **
 - dark mode
 

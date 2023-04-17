@@ -20,6 +20,8 @@ function toIsoDate(date: Date) {
 }
 
 function normalizeEntity(entity: string) {
+    // remove @ to merge mentions and names (e.g. @google and google)
+    // remove - to merge multi-word names (e.g. WebLLM and Web-LLM)
     return entity.toLowerCase().replace(/[@\-]/g, "");
 }
 
