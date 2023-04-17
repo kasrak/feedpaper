@@ -1,9 +1,7 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import proxy from "express-http-proxy";
-
-const { run, all, jsonValue, datetimeValue } = require("./db");
+import { sqlRun, sqlQuery, sqlJson, sqlDate } from "./db";
 
 const HOSTNAME = "0.0.0.0";
 const BACKEND_PORT = 2345;
@@ -18,9 +16,9 @@ export async function startServer() {
     function formatItem(row) {
         return {
             ...row,
-            created_at: datetimeValue(row["created_at"]),
-            content: jsonValue(row["content"]),
-            enrichment: jsonValue(row["enrichment"]),
+            created_at: sqlDate(row["created_at"]).toISOString(),
+            content: sqlJson(row["content"]),
+            enrichment: sqlJson(row["enrichment"]),
         };
     }
 
@@ -31,7 +29,7 @@ export async function startServer() {
     server.post("/api/saveItems", async (req, res) => {
         const { items } = req.body;
         for (const item of items) {
-            await run(
+            await sqlRun(
                 "INSERT INTO items (id, content)" +
                     " VALUES ($1, $2)" +
                     " ON CONFLICT (id)" +
@@ -43,21 +41,21 @@ export async function startServer() {
     });
 
     server.get("/api/getItems", async (req, res) => {
-        const items = await all(
+        const items = await sqlQuery(
             `SELECT * FROM items
                     WHERE created_at > $1 AND created_at < $2
                     AND content->'is_promoted' = 'false'
                     ORDER BY created_at, id ASC`,
-            [req.query["start"], req.query["end"]],
+            [req.query["start"] as string, req.query["end"] as string],
             formatItem,
         );
         res.json({ items });
     });
 
     server.get("/api/getItem", async (req, res) => {
-        const items = await all(
+        const items = await sqlQuery(
             "SELECT * FROM items WHERE id = $1",
-            [req.query["id"]],
+            [req.query["id"] as string],
             formatItem,
         );
         res.json({ item: items[0] });

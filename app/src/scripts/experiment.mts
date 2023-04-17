@@ -1,12 +1,4 @@
-import {
-    sqlQuery,
-    sqlDate,
-    sqlJson,
-    trace,
-    run,
-    sqlRun,
-    traceCached,
-} from "./lib.mjs";
+import { sqlQuery, sqlDate, sqlJson, sqlRun, cached } from "./lib.mjs";
 import { Configuration, OpenAIApi } from "openai";
 import { encoding_for_model } from "@dqbd/tiktoken";
 
@@ -133,13 +125,13 @@ const dbSchema = {
     }),
 };
 
-const getItems = traceCached(async function getItems() {
+const getItems = async function getItems() {
     return await sqlQuery(
         "SELECT * FROM items WHERE created_at > '2023-04-15' AND enrichment is NULL AND content->'is_promoted' = 'false'",
         [],
         dbSchema.items,
     );
-});
+};
 
 const configuration = new Configuration({
     apiKey: "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",
@@ -147,9 +139,7 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 let usageTotalTokens = 0;
-const createChatCompletion = traceCached(async function createChatCompletion(
-    args,
-) {
+const createChatCompletion = cached(async function createChatCompletion(args) {
     const maxRetries = 5;
     let numRetries = 0;
     while (true) {
@@ -179,7 +169,7 @@ const createChatCompletion = traceCached(async function createChatCompletion(
     }
 });
 
-const getChunks = trace(function getChunks(args: {
+const getChunks = function getChunks(args: {
     prefix: string;
     suffix: string;
     items: Array<string>;
@@ -223,7 +213,7 @@ const getChunks = trace(function getChunks(args: {
     }
 
     return chunks;
-});
+};
 
 const systemPrompt = `
 You are a javascript repl with a classify function:
@@ -255,7 +245,7 @@ function removeEmojis(input: string): string {
     );
 }
 
-const tweetToString = trace(function tweetToString(tweet) {
+const tweetToString = function tweetToString(tweet) {
     let text = `@${tweet.user.screen_name}: ${tweet.full_text}`;
     if (tweet.entities) {
         for (const url of tweet.entities.urls || []) {
@@ -281,7 +271,7 @@ const tweetToString = trace(function tweetToString(tweet) {
     text = removeEmojis(text);
 
     return text;
-});
+};
 
 async function main() {
     const items = await getItems();
@@ -396,4 +386,4 @@ async function main() {
     );
 }
 
-run(main);
+main();

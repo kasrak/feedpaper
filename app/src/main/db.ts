@@ -1,9 +1,9 @@
-import terminate from "./terminate";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import sqlite3 from "sqlite3";
 
-const sqlite3 = require("sqlite3").verbose();
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
+import terminate from "./terminate";
 
 // Create a ~/.feedpaper directory if it doesn't exist
 const homeDir = os.homedir();
@@ -11,13 +11,24 @@ const feedpaperDir = path.join(homeDir, ".feedpaper");
 if (!fs.existsSync(feedpaperDir)) {
     fs.mkdirSync(feedpaperDir);
 }
-const db = new sqlite3.Database(path.join(feedpaperDir, "db.sqlite"), (err) => {
-    if (err) {
-        terminate(`Could not connect to database: ${err.message}`);
-    }
-});
+const db = new (sqlite3.verbose().Database)(
+    path.join(feedpaperDir, "db.sqlite"),
+    (err) => {
+        if (err) {
+            terminate(`Could not connect to database: ${err.message}`);
+        }
+    },
+);
 
-async function run(sql: string, params: Array<any>) {
+type SqlValue = string | number | boolean | null;
+
+export function sqlRun(
+    sql: string,
+    params: Array<SqlValue>,
+): Promise<{
+    lastId: number;
+    changes: number;
+}> {
     return new Promise((resolve, reject) => {
         db.run(sql, params, function (err) {
             if (err) {
@@ -34,42 +45,32 @@ async function run(sql: string, params: Array<any>) {
     });
 }
 
-async function all(
+function identity<T>(x: T): T {
+    return x;
+}
+
+export function sqlQuery<RowT>(
     sql: string,
-    params: Array<any>,
-    postprocess?: (row: any) => any,
-) {
+    params: Array<SqlValue>,
+    // TODO: ideally the row type would be Record<string, SqlValue>
+    rowFormatter: (row: any) => RowT = identity,
+): Promise<Array<RowT>> {
     return new Promise((resolve, reject) => {
         db.all(sql, params, (err, rows) => {
             if (err) {
                 reject(err);
             } else {
-                if (postprocess) {
-                    rows = rows.map(postprocess);
-                }
-                resolve(rows);
+                const formattedRows = rows.map(rowFormatter);
+                resolve(formattedRows);
             }
         });
     });
 }
 
-function jsonValue(value) {
-    if (value === null || value === "") {
-        return null;
-    }
-    return JSON.parse(value);
+export function sqlDate(value: string): Date | null {
+    return value ? new Date(value) : null;
 }
 
-function datetimeValue(value) {
-    if (value === null || value === "") {
-        return null;
-    }
-    return new Date(value).toISOString();
+export function sqlJson(value: string): any | null {
+    return value ? JSON.parse(value) : null;
 }
-
-module.exports = {
-    run,
-    all,
-    jsonValue,
-    datetimeValue,
-};
