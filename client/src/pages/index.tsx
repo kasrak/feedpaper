@@ -54,6 +54,15 @@ class CountSet {
         );
         return entries;
     }
+    filter(fn: (entry: [key: string, count: number]) => boolean): CountSet {
+        const newSet = new CountSet();
+        for (const entry of this.getEntries()) {
+            if (fn(entry)) {
+                newSet.add(entry[0]);
+            }
+        }
+        return newSet;
+    }
     map(fn: (entry: [key: string, count: number]) => any): Array<any> {
         return this.getEntries().map(fn);
     }
@@ -374,6 +383,12 @@ function ConversationItems(props: {
     const [expanded, setExpanded] = useState(() => {
         return items.length <= 2;
     });
+    const itemsToShow = expanded
+        ? items
+        : items.slice(0, itemsToShowWhenCollapsed);
+    const visibleSources = new Set(
+        itemsToShow.flatMap((item) => getTweetUsers(item)),
+    );
 
     const mainEntitiesSet = new Set(
         conversation.mainEntities.getEntries().map(([entity]) => entity),
@@ -407,18 +422,16 @@ function ConversationItems(props: {
                     </div>
                 )}
             </div>
-            {(expanded ? items : items.slice(0, itemsToShowWhenCollapsed)).map(
-                (item) => {
-                    return (
-                        <div
-                            key={"tweet-" + item.id}
-                            className="border-b border-b-gray-300"
-                        >
-                            <Tweet tweet={item} isDebug={props.isDebug} />
-                        </div>
-                    );
-                },
-            )}
+            {itemsToShow.map((item) => {
+                return (
+                    <div
+                        key={"tweet-" + item.id}
+                        className="border-b border-b-gray-300"
+                    >
+                        <Tweet tweet={item} isDebug={props.isDebug} />
+                    </div>
+                );
+            })}
             {shouldShowExpandButton &&
                 (expanded ? (
                     <div
@@ -448,6 +461,10 @@ function ConversationItems(props: {
                             <span className="truncate text-sm text-gray-400">
                                 {conversation
                                     .getSources()
+                                    .filter(
+                                        ([source]) =>
+                                            !visibleSources.has(source),
+                                    )
                                     .map(([source]) => `@${source}`)
                                     .join(", ")}
                             </span>
