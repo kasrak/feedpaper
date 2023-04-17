@@ -135,7 +135,7 @@ const dbSchema = {
 
 const getItems = traceCached(async function getItems() {
     return await sqlQuery(
-        "SELECT * FROM items WHERE created_at > '2023-04-15' AND created_at < '2023-04-16' AND content->'is_promoted' = 'false'",
+        "SELECT * FROM items WHERE created_at > '2023-04-15' AND enrichment is NULL AND content->'is_promoted' = 'false'",
         [],
         dbSchema.items,
     );
@@ -235,16 +235,16 @@ classify(id: number, text: string): {
 }
 
 Example input:
-classify(2, "Came across an old pic of ~4 year old me and this is probably the coolest I've ever been.")
-classify(3, "Microsoft releases DeepSpeed chat, a framework to fine tune / run multi-node RLHF on models up to 175B parameters")
-classify(4, "Read the reddit thread on Ozempic improving people's impulse control broadly. Now consider: what are the downstream implications of a society with greater impulse control?")
-classify(5, "That said, it feels likely that Midjourney is on a trajectory to ‘win’ the AI image gen market QT: QT: @peteromallet: Stable Diffusion XL is the most interesting release in AI - combined with ControlNet, Dreambooth/LoRa + other innovations")
+classify(0, "Came across an old pic of ~4 year old me and this is probably the coolest I've ever been.")
+classify(1, "Microsoft releases DeepSpeed chat, a framework to fine tune / run multi-node RLHF on models up to 175B parameters")
+classify(2, "Read the reddit thread on Ozempic improving people's impulse control broadly. Now consider: what are the downstream implications of a society with greater impulse control?")
+classify(3, "That said, it feels likely that Midjourney is on a trajectory to ‘win’ the AI image gen market QT: QT: @peteromallet: Stable Diffusion XL is the most interesting release in AI - combined with ControlNet, Dreambooth/LoRa + other innovations")
 
 Example output:
-{"id":2,"entities":[],"mainEntity":null}
-{"id":3,"entities":["Microsoft", "DeepSpeed chat","RLHF"],"mainEntity":"DeepSpeed chat"}
-{"id":4,"entities":["Ozempic", "reddit"],"mainEntity":"Ozempic"}
-{"id":5,"entities":["Midjourney", "Stable Diffusion XL", "ControlNet", "Dreambooth", "LoRa"],"mainEntity":"Midjourney"}
+{"id":0,"entities":[],"mainEntity":null}
+{"id":1,"entities":["Microsoft", "DeepSpeed chat","RLHF"],"mainEntity":"DeepSpeed chat"}
+{"id":2,"entities":["Ozempic", "reddit"],"mainEntity":"Ozempic"}
+{"id":3,"entities":["Midjourney", "Stable Diffusion XL", "ControlNet", "Dreambooth", "LoRa"],"mainEntity":"Midjourney"}
 
 Only return the json output, no extra commentary`.trim();
 
@@ -303,7 +303,8 @@ async function main() {
         //     continue;
         // }
 
-        const shortId = itemsForPrompt.length;
+        const numFewShotExamples = 4;
+        const shortId = itemsForPrompt.length + numFewShotExamples;
         tweetIdByShortId.set(shortId, tweet.id);
 
         const tweetString = tweetToString(tweet.content).replace(/\n/g, " ");
@@ -330,7 +331,7 @@ async function main() {
         console.log(chunk[1].content);
         const result = await createChatCompletion({
             model: "gpt-3.5-turbo-0301",
-            temperature: 0.1,
+            temperature: 0.2,
             messages: chunk,
             stop: ["\n\n"],
         });
