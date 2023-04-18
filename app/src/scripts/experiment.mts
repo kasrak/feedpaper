@@ -131,7 +131,7 @@ const dbSchema = {
 
 const getItems = async function getItems() {
     return await sqlQuery(
-        "SELECT * FROM items WHERE created_at > '2023-04-16' AND created_at < '2023-04-17' AND content->'is_promoted' = 'false'",
+        "SELECT * FROM items WHERE created_at > '2023-04-17' AND created_at < '2023-04-18' AND content->'is_promoted' = 'false'",
         [],
         dbSchema.items,
     );

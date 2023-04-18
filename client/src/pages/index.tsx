@@ -308,7 +308,11 @@ export function getTweetKeys(tweet: ConversationItem): Array<string> {
     }
     if (tweet.entities && tweet.entities.urls) {
         for (const url of tweet.entities.urls) {
-            keys.push(url.expanded_url);
+            // remove query params
+            let normalizedUrl = url.expanded_url.replace(/\?.*$/, "");
+            // remove trailing slash
+            normalizedUrl = url.expanded_url.replace(/\/$/, "");
+            keys.push(normalizedUrl);
         }
     }
     const tweetCard = getTweetCard(tweet);
