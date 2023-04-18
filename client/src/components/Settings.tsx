@@ -1,5 +1,5 @@
 import { BASE_URL } from "@/utils/base_url";
-import { Button, Input, Modal } from "@parssa/universal-ui";
+import { Button, Input, Dialog } from "@parssa/universal-ui";
 import { debounce } from "lodash";
 import { ChangeEvent, useState } from "react";
 
@@ -41,9 +41,9 @@ export default function Settings(props: {
     };
 
     return (
-        <Modal open={props.open} onOpenChange={props.onOpenChange}>
-            <Modal.Content>
-                <Modal.Title>Settings</Modal.Title>
+        <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+            <Dialog.Content>
+                <Dialog.Title>Settings</Dialog.Title>
                 <div className="flex flex-col gap-4 mt-4">
                     <label className="flex flex-col gap-1">
                         <div className="font-medium">OpenAI API key</div>
@@ -93,7 +93,7 @@ export default function Settings(props: {
                         </Button>
                     </div>
                 </div>
-            </Modal.Content>
-        </Modal>
+            </Dialog.Content>
+        </Dialog>
     );
 }
