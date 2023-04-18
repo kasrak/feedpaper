@@ -354,7 +354,14 @@ function getConversations(items: Array<ConversationItem>) {
     // interestingness.
     conversations = sortBy(
         conversations,
-        (conversation) => -conversation.getSources().size,
+        (conversation) =>
+            -(
+                // double-count followed sources deliberately
+                (
+                    conversation.getSources().size +
+                    conversation.getFollowedSources().size
+                )
+            ) * conversation.getRelevance(),
     );
 
     // Filter out low relevance conversations

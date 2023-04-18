@@ -1,5 +1,7 @@
 - run enrichment script automatically
 - bootstrap sqlite db schema and prepare for migrations (https://github.com/kriasoft/node-sqlite)
+- settings: openai api key, list of interests
+
 - don't pull focus when app runs scraping
 - click to expand media
 - animated gifs/videos
