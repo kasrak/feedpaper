@@ -6,120 +6,6 @@ import endent_ from "endent";
 // @ts-ignore
 const endent = endent_.default;
 
-const goal = {
-    "1645923578624507904": {
-        refs: ["Steve Jobs"],
-    },
-    "1645576853489586181": {
-        refs: ["bluesky"],
-    },
-    "1645576854785626112": {
-        refs: ["bluesky", "nostr"],
-    },
-    "1645575030330519553": {
-        refs: ["Flair"],
-    },
-    "1645558599610171392": {
-        refs: ["AI"],
-    },
-    "1645571158585253888": {
-        refs: ["MSR", "GPT-4"],
-    },
-    "1645583531316498432": {
-        refs: [],
-    },
-    "1645599766083174401": {
-        refs: ["University of Toronto Downtown Recovery"],
-    },
-    "1645629760037609473": {
-        refs: ["Twitter", "Bluesky"],
-    },
-    "1645629634216869889": {
-        refs: ["Twitter Circle"],
-    },
-    "1645808279849947137": {
-        refs: ["BabyAGI"],
-    },
-    "1645811071230545920": {
-        refs: ["BabyAGI"],
-    },
-    "1645846318328463360": {
-        refs: ["bluesky", "AT protocol"],
-    },
-    "1645811222661718021": {
-        refs: ["autonomous agent"],
-    },
-    "1645807322994978816": {
-        refs: ["crdt"],
-    },
-    "1645807017725153283": {
-        refs: ["China", "AI", "House Select Committee"],
-    },
-    "1645838873300172810": {
-        refs: ["bluesky"],
-    },
-    "1645838119395291136": {
-        refs: ["GPTAgent.js", "BabyAGI"],
-    },
-    "1645835946464509979": {
-        refs: [],
-    },
-    "1645926946793201664": {
-        refs: ["NATO"],
-    },
-    "1645931780011343872": {
-        refs: ["Theory of Fun", "Lenses"],
-    },
-    "1645932707036184576": {
-        refs: ["Neuralink"],
-    },
-    "1645934382631223305": {
-        refs: [],
-    },
-    "1645919732753928192": {
-        refs: ["Auto-GPT"],
-    },
-    "1645919773728083968": {
-        refs: ["Replit"],
-    },
-    "1645894588694142976": {
-        refs: ["Otto"],
-    },
-    "1645900214706864129": {
-        refs: ["LLM", "babyagi"],
-    },
-    "1645905977097744384": {
-        refs: ["babyagi", "Pinecone", "Slack"],
-    },
-    "1645918862557483008": {
-        refs: ["val town", "dynamicland"],
-    },
-    "1645916773726969856": {
-        refs: ["prompt injection"],
-    },
-    "1646964864844283904": {
-        refs: [
-            "Midjourney",
-            "Stable Diffusion XL",
-            "ControlNet",
-            "Dreambooth",
-            "LoRa",
-        ],
-        mainEntity: "Midjourney",
-    },
-};
-
-function getDiff(
-    goalItem: { refs: Array<string> },
-    resultItem: { refs: Array<string> },
-) {
-    const goalRefs = new Set(goalItem.refs);
-    const resultRefs = new Set(resultItem.refs);
-    const missingRefs = [...goalRefs].filter((ref) => !resultRefs.has(ref));
-    const extraRefs = [...resultRefs].filter((ref) => !goalRefs.has(ref));
-    return { missingRefs, extraRefs };
-}
-
 const dbSchema = {
     items: (row) => ({
         id: row.id,
@@ -138,7 +24,7 @@ const getItems = async function getItems() {
 };
 
 const configuration = new Configuration({
-    apiKey: "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",
+    apiKey: process.env.OPENAI_KEY,
 });
 const openai = new OpenAIApi(configuration);
 
@@ -218,29 +104,6 @@ const getChunks = function getChunks(args: {
     return chunks;
 };
 
-const systemPrompt = `
-You are a javascript repl with a classify function:
-
-classify(id: number, text: string): {
-  id: number, // id of the tweet
-  entities: Array<string>, // entities (events, companies, products, articles, etc) mentioned in the text. can be empty.
-  mainEntity: string | null, // the main subject of the text, from entities. can be null.
-}
-
-Example input:
-classify(0, "Came across an old pic of ~4 year old me and this is probably the coolest I've ever been.")
-classify(1, "Microsoft releases DeepSpeed chat, a framework to fine tune / run multi-node RLHF on models up to 175B parameters")
-classify(2, "Read the reddit thread on Ozempic improving people's impulse control broadly. Now consider: what are the downstream implications of a society with greater impulse control?")
-classify(3, "That said, it feels likely that Midjourney is on a trajectory to ‘win’ the AI image gen market QT: QT: @peteromallet: Stable Diffusion XL is the most interesting release in AI - combined with ControlNet, Dreambooth/LoRa + other innovations")
-
-Example output:
-{"id":0,"entities":[],"mainEntity":null}
-{"id":1,"entities":["Microsoft", "DeepSpeed chat","RLHF"],"mainEntity":"DeepSpeed chat"}
-{"id":2,"entities":["Ozempic", "reddit"],"mainEntity":"Ozempic"}
-{"id":3,"entities":["Midjourney", "Stable Diffusion XL", "ControlNet", "Dreambooth", "LoRa"],"mainEntity":"Midjourney"}
-
-Only return the json output, no extra commentary`.trim();
-
 function removeEmojis(input: string): string {
     // TODO: this doesn't quite catch everything (e.g. 🚀)...
     return input.replace(
@@ -293,10 +156,6 @@ async function main() {
     const tweetIdByShortId = new Map();
     let itemsForPrompt: Array<string> = [];
     for (const tweet of items) {
-        // if (!goal[tweet.id]) {
-        //     continue;
-        // }
-
         const numFewShotExamples = 4;
         const shortId = itemsForPrompt.length + numFewShotExamples;
         tweetIdByShortId.set(shortId, tweet.id);
@@ -328,7 +187,7 @@ async function main() {
 
         {id: number, entities: Array<string>, main_entity: string, relevance: number}
 
-        relevance is a rating from 1 to 5 based on the tweet's relevance to my interests: machine learning, ai, software, products, startups
+        relevance is a rating from 1 to 5 based on the tweet's relevance to my interests: machine learning, ai, software, products, startups, san francisco
 
         Begin JSON response:
         `,
