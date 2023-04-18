@@ -7,6 +7,12 @@ import { BASE_URL } from "@/utils/base_url";
 import { checkIfPlainRetweet, getTweetCard } from "@/utils/twitter";
 import { sortBy } from "lodash";
 import { useLocalStorageState } from "@/utils/hooks";
+import Settings from "@/components/Settings";
+import {
+    ArrowLeftIcon,
+    ArrowRightIcon,
+    Cog6ToothIcon,
+} from "@heroicons/react/20/solid";
 
 ////////////////////////////////////////////////////////////////////////////////
 // Data
@@ -644,7 +650,6 @@ export default function Home() {
     function setDate(date: Date) {
         setDateIso(toIsoDate(date));
     }
-    // HACK: this will be off-by-1 for some timezones I think
     const date = new Date(dateIso + "T00:00:00");
 
     const query = useQuery({
@@ -654,6 +659,7 @@ export default function Home() {
     });
 
     const [isDebug, setIsDebug] = useLocalStorageState("isDebug", false);
+    const [showSettings, setShowSettings] = useState(false);
 
     return (
         <>
@@ -671,7 +677,7 @@ export default function Home() {
                                 year: "numeric",
                             })}
                         </h3>
-                        <label className="flex gap-1 items-center text-gray-600 mr-2 select-none">
+                        <label className="flex gap-1 items-center text-gray-600 mr-1 select-none">
                             <input
                                 type="checkbox"
                                 checked={isDebug}
@@ -679,7 +685,11 @@ export default function Home() {
                             />
                             Debug
                         </label>
+                        <button className="mr-1 text-gray-900 hover:text-sky-600">
+                            <Cog6ToothIcon className="w-4 h-4" />
+                        </button>
                         <button
+                            className="text-gray-900 hover:text-sky-600"
                             onClick={() => {
                                 setDate(
                                     new Date(
@@ -688,9 +698,10 @@ export default function Home() {
                                 );
                             }}
                         >
-                            &larr;
+                            <ArrowLeftIcon className="w-4 h-4" />
                         </button>
                         <button
+                            className="text-gray-900 hover:text-sky-600"
                             onClick={() => {
                                 setDate(
                                     new Date(
@@ -699,7 +710,7 @@ export default function Home() {
                                 );
                             }}
                         >
-                            &rarr;
+                            <ArrowRightIcon className="w-4 h-4" />
                         </button>
                     </div>
                     {query.isLoading && !query.data && (
@@ -714,6 +725,12 @@ export default function Home() {
                         />
                     )}
                 </div>
+                <Settings
+                    open={showSettings}
+                    onOpenChange={(isOpen) => {
+                        setShowSettings(isOpen);
+                    }}
+                />
             </main>
         </>
     );
