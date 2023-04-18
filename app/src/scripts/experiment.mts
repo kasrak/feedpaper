@@ -1,6 +1,10 @@
 import { sqlQuery, sqlDate, sqlJson, sqlRun, cached } from "./lib.mjs";
 import { Configuration, OpenAIApi } from "openai";
 import { encoding_for_model } from "@dqbd/tiktoken";
+import endent_ from "endent";
+
+// @ts-ignore
+const endent = endent_.default;
 
 const goal = {
     "1645923578624507904": {
@@ -127,7 +131,7 @@ const dbSchema = {
 
 const getItems = async function getItems() {
     return await sqlQuery(
-        "SELECT * FROM items WHERE created_at > '2023-04-15' AND enrichment is NULL AND content->'is_promoted' = 'false'",
+        "SELECT * FROM items WHERE created_at > '2023-04-16' AND created_at < '2023-04-17' AND content->'is_promoted' = 'false'",
         [],
         dbSchema.items,
     );
@@ -169,29 +173,28 @@ const createChatCompletion = cached(async function createChatCompletion(args) {
     }
 });
 
+type Chunk = Array<{ role: string; content: string }>;
 const getChunks = function getChunks(args: {
     prefix: string;
     suffix: string;
     items: Array<string>;
     separator: string;
     maxChunkTokens: number;
-}) {
+}): Array<Chunk> {
     const { prefix, suffix, items, separator, maxChunkTokens } = args;
     const enc = encoding_for_model("gpt-3.5-turbo");
 
     const tokensPerMessage = 4; // gpt-3.5-turbo-0301
-    const prefixTokens = enc.encode(prefix).length + tokensPerMessage;
-    const suffixTokens = suffix
-        ? enc.encode(suffix).length + tokensPerMessage
-        : 0;
+    const prefixTokens = enc.encode(prefix).length;
+    const suffixTokens = suffix ? enc.encode(suffix).length : 0;
     const itemTokens = items.map((item) => enc.encode(item).length);
     const separatorTokens = enc.encode(separator).length;
 
-    const chunks: Array<Array<{ role: string; content: string }>> = [];
+    const chunks: Array<Chunk> = [];
     let itemIndex = 0;
     while (itemIndex < items.length) {
-        const chunk = [{ role: "system", content: systemPrompt }];
-        let userContent = "";
+        const chunk: Chunk = [];
+        let userContent = prefix;
         let chunkTokens =
             prefixTokens + tokensPerMessage /* user message */ + suffixTokens;
         while (
@@ -205,10 +208,10 @@ const getChunks = function getChunks(args: {
                 break;
             }
         }
-        chunk.push({ role: "user", content: userContent });
         if (suffix) {
-            chunk.push({ role: "system", content: suffix });
+            userContent += suffix;
         }
+        chunk.push({ role: "user", content: userContent });
         chunks.push(chunk);
     }
 
@@ -239,6 +242,7 @@ Example output:
 Only return the json output, no extra commentary`.trim();
 
 function removeEmojis(input: string): string {
+    // TODO: this doesn't quite catch everything (e.g. 🚀)...
     return input.replace(
         /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff])/gu,
         " ",
@@ -297,31 +301,44 @@ async function main() {
         const shortId = itemsForPrompt.length + numFewShotExamples;
         tweetIdByShortId.set(shortId, tweet.id);
 
-        const tweetString = tweetToString(tweet.content).replace(/\n/g, " ");
+        const tweetString = tweetToString(tweet.content).replace(/\n/g, "\\n");
         results[tweet.id] = {
             longId: tweet.id,
             shortId,
             tweetString,
         };
 
-        itemsForPrompt.push(
-            `classify(${shortId}, ${JSON.stringify(tweetString)});`,
-        );
+        itemsForPrompt.push(JSON.stringify({ id: shortId, text: tweetString }));
     }
 
     const chunks = getChunks({
         maxChunkTokens: 750,
-        prefix: systemPrompt,
+        prefix:
+            endent`
+        Extract entities from these tweets:
+
+        [
+        ` + "\n",
         items: itemsForPrompt,
-        separator: "\n",
-        suffix: "",
+        separator: ",\n",
+        suffix: endent`
+        ]
+
+        Output valid JSON in this format:
+
+        {id: number, entities: Array<string>, main_entity: string, relevance: number}
+
+        relevance is a rating from 1 to 5 based on the tweet's relevance to my interests: machine learning, ai, software, products, startups
+
+        Begin JSON response:
+        `,
     });
 
     for (const chunk of chunks) {
-        console.log(chunk[1].content);
+        console.log(chunk[0].content);
         const result = await createChatCompletion({
             model: "gpt-3.5-turbo-0301",
-            temperature: 0.2,
+            temperature: 0.5,
             messages: chunk,
             stop: ["\n\n"],
         });
@@ -333,49 +350,39 @@ async function main() {
             );
         }
         console.log(completion.message!.content);
+        console.log("=".repeat(80));
 
-        // TODO: response sometimes has newlines in each JSON object...
-        const lines = completion.message!.content.split("\n");
-        for (const line of lines) {
-            let parsed;
-            try {
-                parsed = JSON.parse(line);
-            } catch (err) {
-                console.error("error parsing line:", line);
+        let parsedResults: Array<{
+            id: number;
+            entities: Array<string>;
+            main_entity: string;
+            relevance: number;
+        }>;
+        try {
+            parsedResults = JSON.parse(completion.message!.content);
+            // TODO: validate with zod
+            if (!Array.isArray(parsedResults)) {
+                throw new Error("not an array");
             }
-            if (parsed) {
-                const tweetId = tweetIdByShortId.get(parsed.id);
-                if (!tweetId) {
-                    console.error("No tweet ID for short ID:", parsed.id);
-                } else {
-                    const { entities, mainEntity } = parsed;
-                    const result = results[tweetId];
-                    const diff = goal[tweetId]
-                        ? getDiff(goal[tweetId], {
-                              refs: entities,
-                          })
-                        : null;
-                    if (diff) {
-                        console.table([
-                            ["id", "tweet", "main", "refs", "missing", "extra"],
-                            [
-                                {
-                                    _html: `<a href="https://twitter.com/u/status/${tweetId}" target="_blank">${tweetId}</a>`,
-                                },
-                                result.tweetString,
-                                mainEntity,
-                                entities,
-                                diff.missingRefs,
-                                diff.extraRefs,
-                            ],
-                        ]);
-                    }
-                    await sqlRun(
-                        "UPDATE items SET enrichment = $1 WHERE id = $2",
-                        [JSON.stringify({ mainEntity, entities }), tweetId],
-                    );
-                }
+        } catch (err) {
+            console.error("Error: parsing JSON:", err);
+            continue;
+        }
+
+        for (const parsedResult of parsedResults) {
+            const tweetId = tweetIdByShortId.get(parsedResult.id);
+            if (!tweetId) {
+                console.error(
+                    "Error: No tweet ID for short ID:",
+                    parsedResult.id,
+                );
+                continue;
             }
+            const { entities, main_entity, relevance } = parsedResult;
+            await sqlRun("UPDATE items SET enrichment = $1 WHERE id = $2", [
+                JSON.stringify({ entities, main_entity, relevance }),
+                tweetId,
+            ]);
         }
     }
 

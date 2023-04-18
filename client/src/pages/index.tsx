@@ -111,12 +111,15 @@ class Conversation {
         }
 
         if (item.enrichment) {
-            const { mainEntity, entities } = item.enrichment;
+            const { main_entity: mainEntity, entities } = item.enrichment;
             if (mainEntity) {
                 this.mainEntities.add(normalizeEntity(mainEntity));
             }
             for (const entity of entities) {
-                this.allEntities.add(normalizeEntity(entity));
+                const normalizedEntity = normalizeEntity(entity);
+                if (normalizedEntity !== "qt") {
+                    this.allEntities.add(normalizedEntity);
+                }
             }
         }
     }
@@ -164,6 +167,12 @@ class Conversation {
             }
         }
         return sources;
+    }
+    getRelevance(): number {
+        const relevances = this.items.map(
+            (item) => item.enrichment?.relevance || 0,
+        );
+        return Math.max(...relevances);
     }
     toString(): string {
         return JSON.stringify(this.mainEntities.getEntries());
@@ -421,6 +430,7 @@ function ConversationItems(props: {
                                 )
                                 .join(", ")}
                         </div>
+                        <div>relevance: {conversation.getRelevance()}</div>
                     </div>
                 )}
             </div>
