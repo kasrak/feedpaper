@@ -2,7 +2,7 @@ import Head from "next/head";
 import { useQuery } from "react-query";
 import Tweet from "@/components/Tweet";
 import { useQueryParam, StringParam, withDefault } from "use-query-params";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { BASE_URL } from "@/utils/base_url";
 import { checkIfPlainRetweet, getTweetCard } from "@/utils/twitter";
 import { sortBy } from "lodash";
@@ -431,6 +431,7 @@ function ConversationItems(props: {
     const [expanded, setExpanded] = useState(() => {
         return items.length <= 2;
     });
+    const pageScrollYRef = useRef(0);
     const itemsToShow = expanded
         ? items
         : items.slice(0, itemsToShowWhenCollapsed);
@@ -496,8 +497,10 @@ function ConversationItems(props: {
                         <button
                             className="font-semibold text-sky-600 px-4 py-2"
                             onClick={() => {
-                                // TODO: jarring scroll position change
                                 setExpanded(false);
+                                window.scrollTo({
+                                    top: pageScrollYRef.current,
+                                });
                             }}
                         >
                             Show less
@@ -507,7 +510,10 @@ function ConversationItems(props: {
                     <div>
                         <button
                             className="flex items-center px-4 py-2 overflow-hidden w-full text-left"
-                            onClick={() => setExpanded(true)}
+                            onClick={() => {
+                                pageScrollYRef.current = window.scrollY;
+                                setExpanded(true);
+                            }}
                         >
                             <span className="font-semibold text-sky-600 flex-grow whitespace-nowrap mr-4">
                                 Show {items.length - itemsToShowWhenCollapsed}{" "}
