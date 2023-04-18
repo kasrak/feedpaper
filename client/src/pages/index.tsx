@@ -163,7 +163,19 @@ class Conversation {
         for (const item of this.items) {
             const itemSources = getTweetUsers(item);
             for (const source of itemSources) {
-                sources.add(source);
+                sources.add(source.screen_name);
+            }
+        }
+        return sources;
+    }
+    getFollowedSources(): Set<string> {
+        const sources = new Set<string>();
+        for (const item of this.items) {
+            const itemSources = getTweetUsers(item);
+            for (const source of itemSources) {
+                if (source.following) {
+                    sources.add(source.screen_name);
+                }
             }
         }
         return sources;
@@ -172,7 +184,14 @@ class Conversation {
         const relevances = this.items.map(
             (item) => item.enrichment?.relevance || 0,
         );
-        return Math.max(...relevances);
+        // if no items have a relevance, return 5 by default
+        return Math.max(...relevances) || 5;
+    }
+    getUpvotes(): number {
+        return this.items.reduce(
+            (sum, item) => sum + item.favorite_count + item.retweet_count,
+            0,
+        );
     }
     toString(): string {
         return JSON.stringify(this.mainEntities.getEntries());
@@ -294,13 +313,15 @@ export function getTweetKeys(tweet: ConversationItem): Array<string> {
     return keys;
 }
 
-function getTweetUsers(tweet: ConversationItem): Array<string> {
-    const users = [tweet.user.screen_name];
+function getTweetUsers(
+    tweet: ConversationItem,
+): Array<{ screen_name: string; following: boolean }> {
+    const users = [tweet.user];
     if (tweet.retweeted_tweet) {
-        users.push(tweet.retweeted_tweet.user.screen_name);
+        users.push(tweet.retweeted_tweet.user);
     }
     if (tweet.quoted_tweet) {
-        users.push(tweet.quoted_tweet.user.screen_name);
+        users.push(tweet.quoted_tweet.user);
     }
     return users;
 }
@@ -336,6 +357,22 @@ function getConversations(items: Array<ConversationItem>) {
         (conversation) => -conversation.getSources().size,
     );
 
+    // Filter out low relevance conversations
+    const hiddenConversations: Array<Conversation> = [];
+    conversations = conversations.filter((conversation) => {
+        if (conversation.getRelevance() > 2) {
+            return true;
+        }
+        if (conversation.getFollowedSources().size > 0) {
+            return true;
+        }
+        if (conversation.getUpvotes() > 1000) {
+            return true;
+        }
+        hiddenConversations.push(conversation);
+        return false;
+    });
+
     // Now order so related conversations are closer together.
     const graph = new ConversationGraph();
     for (const conversation of conversations) {
@@ -364,7 +401,7 @@ function getConversations(items: Array<ConversationItem>) {
         dfs(remainingConversations[0], graph, unvisited, sortedConversations);
     }
 
-    return sortedConversations;
+    return { sortedConversations, hiddenConversations };
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -398,7 +435,9 @@ function ConversationItems(props: {
         ? items
         : items.slice(0, itemsToShowWhenCollapsed);
     const visibleSources = new Set(
-        itemsToShow.flatMap((item) => getTweetUsers(item)),
+        itemsToShow.flatMap((item) =>
+            getTweetUsers(item).map((user) => user.screen_name),
+        ),
     );
 
     const mainEntitiesSet = new Set(
@@ -431,6 +470,10 @@ function ConversationItems(props: {
                                 .join(", ")}
                         </div>
                         <div>relevance: {conversation.getRelevance()}</div>
+                        <div>upvotes: {conversation.getUpvotes()}</div>
+                        <div>
+                            following: {conversation.getFollowedSources().size}
+                        </div>
                     </div>
                 )}
             </div>
@@ -491,7 +534,7 @@ function ConversationsList(props: {
     items: Array<ConversationItem>;
     isDebug: boolean;
 }) {
-    const conversations = useMemo(() => {
+    const { sortedConversations, hiddenConversations } = useMemo(() => {
         return getConversations(
             props.items.map((item) => ({
                 ...item.content,
@@ -499,6 +542,8 @@ function ConversationsList(props: {
             })),
         );
     }, [props.items]);
+    const [showHiddenConversations, setShowHiddenConversations] =
+        useState(false);
 
     if (props.items.length === 0) {
         return (
@@ -508,7 +553,7 @@ function ConversationsList(props: {
 
     const debugConversation = (conversation: Conversation) => {
         const similarConversations = sortBy(
-            conversations.map(
+            sortedConversations.map(
                 (c) => [getSimilarity(conversation, c), c] as const,
             ),
             (c) => -c[0],
@@ -537,7 +582,7 @@ function ConversationsList(props: {
             <div className="text-sm text-gray-600 px-4 py-2 bg-gray-100 border-b border-gray-300">
                 {props.items.length} tweets
             </div>
-            {conversations.map((conversation) => {
+            {sortedConversations.map((conversation) => {
                 return (
                     <ConversationItems
                         key={conversation.getItems()[0].id}
@@ -547,6 +592,33 @@ function ConversationsList(props: {
                     />
                 );
             })}
+            {hiddenConversations.length > 0 && (
+                <div className="border-t border-gray-300 text-gray-500 ">
+                    {showHiddenConversations ? (
+                        hiddenConversations.map((conversation) => {
+                            return (
+                                <ConversationItems
+                                    key={conversation.getItems()[0].id}
+                                    conversation={conversation}
+                                    isDebug={props.isDebug}
+                                    onDebugConversation={debugConversation}
+                                />
+                            );
+                        })
+                    ) : (
+                        <div className="p-4">
+                            Saved you from reading {hiddenConversations.length}{" "}
+                            low relevance conversations.{" "}
+                            <button
+                                className="text-sky-600"
+                                onClick={() => setShowHiddenConversations(true)}
+                            >
+                                Show
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
@@ -577,8 +649,8 @@ export default function Home() {
             </Head>
             <main>
                 <div className="max-w-[620px] mx-auto border m-2 border-gray-300 bg-white">
-                    <div className="p-4 bg-gray-50 border-b border-b-gray-300 flex gap-4">
-                        <h3 className="font-semibold text-lg text-gray-800 flex-grow">
+                    <div className="p-4 bg-gray-50 border-b border-b-gray-300 flex gap-4 sticky top-0 z-10">
+                        <h3 className="font-semibold text-base text-gray-800 flex-grow">
                             {date.toLocaleDateString(undefined, {
                                 weekday: "long",
                                 day: "numeric",
