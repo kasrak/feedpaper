@@ -247,7 +247,12 @@ function dfs(
         graph.getNeighbors(conversation)!.entries(),
     ).sort((a, b) => b[1] - a[1]);
 
-    for (const [nextConversation] of neighbors) {
+    for (const [nextConversation, distance] of neighbors) {
+        // somewhat arbitrary threshold, but if the remaining neighbors
+        // are too far away, revert to the original "interestingness" order.
+        if (distance < 0.05) {
+            break;
+        }
         if (unvisited.has(nextConversation)) {
             dfs(nextConversation, graph, unvisited, sortedConversations);
         }
@@ -255,6 +260,11 @@ function dfs(
 }
 
 function getSimilarity(a: Conversation, b: Conversation) {
+    const mainEntityMatchWeight = 10;
+    const mainEntitySubsetWeight = 3;
+    const mainEntityOtherEntityMatchWeight = 2;
+    const otherEntityMatchWeight = 1;
+
     let similarity = 0;
 
     const aMainStr = a.mainEntities
@@ -274,19 +284,28 @@ function getSimilarity(a: Conversation, b: Conversation) {
     }
     for (const [mainEntity] of b.mainEntities.getEntries()) {
         if (aMainStr.includes(mainEntity)) {
-            similarity += 3;
+            similarity += mainEntitySubsetWeight;
         }
     }
     for (const [entity] of a.allEntities.getEntries()) {
         if (b.mainEntities.has(entity)) {
-            similarity += 2;
+            similarity += mainEntityOtherEntityMatchWeight;
         } else if (b.allEntities.has(entity)) {
-            similarity += 1;
+            similarity += otherEntityMatchWeight;
         }
     }
-    // todo: subset words in texts?
-    // todo: weight by number of entities?
-    return similarity;
+
+    // TODO: i think this would work better if entities were
+    // weighted by how often they appear across all conversations.
+    // e.g. a match "minigpt4" should be worth more than a match
+    // on "llm", since the latter is more generic.
+
+    // something kinda like jaccard index:
+    return (
+        similarity /
+        (a.mainEntities.size * mainEntityMatchWeight +
+            b.mainEntities.size * mainEntityMatchWeight)
+    );
 }
 
 export function getTweetKeys(tweet: ConversationItem): Array<string> {
