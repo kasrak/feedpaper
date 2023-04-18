@@ -129,6 +129,11 @@ class Conversation {
             }
         }
     }
+    merge(otherConversation: Conversation) {
+        for (const item of otherConversation.items) {
+            this.addItem(item, Array.from(otherConversation.keys));
+        }
+    }
     getItems(): Array<ConversationItem> {
         if (!this._dedupedItems) {
             const allItems = sortBy(
@@ -354,6 +359,23 @@ function getConversations(items: Array<ConversationItem>) {
             foundConversation.addItem(item.quoted_tweet, keys);
         }
         foundConversation.addItem(item, keys);
+    }
+
+    // Because we create conversations greedily, we sometimes end up with
+    // conversations getting split. E.g. conversations [a], [b] get created.
+    // Then c comes along referencing both a, and b. It will arbitrarily
+    // end up in one of the two conversations. Now we need to merge them.
+    for (let i = 0; i < conversations.length; i++) {
+        const conversation = conversations[i];
+        const conversationKeys = Array.from(conversation.keys);
+        for (let j = i + 1; j < conversations.length; j++) {
+            const otherConversation = conversations[j];
+            if (setContains(otherConversation.keys, conversationKeys)) {
+                conversation.merge(otherConversation);
+                conversations.splice(j, 1);
+                j--;
+            }
+        }
     }
 
     // First sort by number of users involved as an initial heuristic for
