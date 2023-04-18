@@ -26,6 +26,38 @@ export async function startServer() {
     server.use(cors());
     server.use(express.json({ limit: "50mb" }));
 
+    server.post("/api/saveSettings", async (req, res) => {
+        const { settings } = req.body;
+        for (const [key, value] of Object.entries(settings)) {
+            await sqlRun(
+                "INSERT INTO settings (key, value)" +
+                    " VALUES ($1, $2)" +
+                    " ON CONFLICT (key)" +
+                    " DO UPDATE SET value = $2",
+                [key, JSON.stringify(value)],
+            );
+        }
+        res.json({ ok: true });
+    });
+
+    server.get("/api/getSettings", async (req, res) => {
+        const settingsRows = await sqlQuery(
+            `SELECT * FROM settings`,
+            [],
+            (row) => {
+                return {
+                    key: row.key,
+                    value: sqlJson(row.value),
+                };
+            },
+        );
+        const settings = {};
+        for (const row of settingsRows) {
+            settings[row.key] = row.value;
+        }
+        res.json({ settings });
+    });
+
     server.post("/api/saveItems", async (req, res) => {
         const { items } = req.body;
         for (const item of items) {

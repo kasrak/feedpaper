@@ -452,6 +452,11 @@ async function getItems(date: Date) {
     return res.json();
 }
 
+async function getSettings() {
+    const res = await fetch(`${BASE_URL}/api/getSettings`);
+    return res.json();
+}
+
 function ConversationItems(props: {
     conversation: Conversation;
     isDebug: boolean;
@@ -674,9 +679,14 @@ export default function Home() {
     }
     const date = new Date(dateIso + "T00:00:00");
 
-    const query = useQuery({
+    const itemsQuery = useQuery({
         queryKey: ["items", dateIso],
         queryFn: () => getItems(date),
+        refetchOnWindowFocus: false,
+    });
+    const settingsQuery = useQuery({
+        queryKey: "settings",
+        queryFn: () => getSettings(),
         refetchOnWindowFocus: false,
     });
 
@@ -707,7 +717,10 @@ export default function Home() {
                             />
                             Debug
                         </label>
-                        <button className="mr-1 text-gray-900 hover:text-sky-600">
+                        <button
+                            className="mr-1 text-gray-900 hover:text-sky-600"
+                            onClick={() => setShowSettings(true)}
+                        >
                             <Cog6ToothIcon className="w-4 h-4" />
                         </button>
                         <button
@@ -735,24 +748,27 @@ export default function Home() {
                             <ArrowRightIcon className="w-4 h-4" />
                         </button>
                     </div>
-                    {query.isLoading && !query.data && (
+                    {itemsQuery.isLoading && !itemsQuery.data && (
                         <div className="flex items-center justify-center p-4">
                             Loading...
                         </div>
                     )}
-                    {query.data && (
+                    {itemsQuery.data && (
                         <ConversationsList
-                            items={query.data.items}
+                            items={itemsQuery.data.items}
                             isDebug={isDebug}
                         />
                     )}
                 </div>
-                <Settings
-                    open={showSettings}
-                    onOpenChange={(isOpen) => {
-                        setShowSettings(isOpen);
-                    }}
-                />
+                {settingsQuery.isFetched && (
+                    <Settings
+                        initialSettings={settingsQuery.data.settings}
+                        open={showSettings}
+                        onOpenChange={(isOpen) => {
+                            setShowSettings(isOpen);
+                        }}
+                    />
+                )}
             </main>
         </>
     );
