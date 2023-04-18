@@ -1,6 +1,6 @@
 - run enrichment script automatically
 - bootstrap sqlite db schema and prepare for migrations (https://github.com/kriasoft/node-sqlite)
-- settings: openai api key, list of interests
+- remember scroll position per day
 
 - don't pull focus when app runs scraping
 - click to expand media
@@ -14,7 +14,6 @@
 - improve sorting, e.g. http://localhost:3000/?date=2023-04-13 "databricks"
 - use GPT to summarize clusters with 3+ tweets
 - pull in original tweet for replies & quotes, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
-- remember scroll position per day **
 - dark mode
 
 - demo notes
