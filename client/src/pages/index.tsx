@@ -390,16 +390,12 @@ function getConversations(items: Array<ConversationItem>) {
     // conversations getting split. E.g. conversations [a], [b] get created.
     // Then c comes along referencing both a, and b. It will arbitrarily
     // end up in one of the two conversations. Now we need to merge them.
-    // Also merge conversations that are highly similar.
     for (let i = 0; i < conversations.length; i++) {
         const conversation = conversations[i];
         const conversationKeys = Array.from(conversation.keys);
         for (let j = i + 1; j < conversations.length; j++) {
             const otherConversation = conversations[j];
-            if (
-                setContains(otherConversation.keys, conversationKeys) ||
-                getSimilarity(conversation, otherConversation) > 0.13
-            ) {
+            if (setContains(otherConversation.keys, conversationKeys)) {
                 conversation.merge(otherConversation);
                 conversations.splice(j, 1);
                 j--;
