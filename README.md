@@ -47,6 +47,8 @@ That's it! As long as the window is open, it will periodically refresh to fetch 
 
 You can see the feed by clicking on the "Feedpaper" tab, or going to http://localhost:2346 in your browser.
 
+If you're seeing a 404 page, try restarting the ./dev.sh script.
+
 ## How it works
 
 The code is split into two parts:
