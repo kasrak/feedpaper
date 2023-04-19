@@ -24,9 +24,28 @@ This is not intended to be a Twitter client, that would most likely be against T
 - Summarize the feed to create a personalized daily briefing.
 - Explore alternate UIs, going beyond a linear feed.
 
-## Development
+## Development setup
 
-Instructions coming soon...
+After cloning:
+
+Install dependencies:
+
+```
+npm install --prefix=app && npm install --prefix=client
+```
+
+Start development servers:
+
+```
+./dev.sh
+```
+
+Now the Electron app show open. Click "Twitter" in the top tab bar, then log into
+a Twitter account.
+
+That's it! As long as the window is open, it will periodically refresh to fetch the latest tweets.
+
+You can see the feed by clicking on the "Feedpaper" tab, or going to http://localhost:2346 in your browser.
 
 ## How it works
 
