@@ -242,7 +242,21 @@ async function runEnrichment(enrichmentId: number): Promise<EnrichmentResult> {
         maxPromptTokens: 750,
         prefix:
             endent`
-        Extract entities (e.g. people, products, organizations, titles, places) from these tweets:
+        Entities are people, products, organizations, titles, places.
+
+        Only extract @handles when relevant to the topic of the tweet. Example:
+        [
+            {"id": 0, text: "@google: we're excited to announce our latest LLM model: Bard"},
+            {"id": 1, text: "@bobsmith: san francisco housing rules impose onerous restrictions"},
+        ]
+
+        JSON reponse:
+        [
+            {"id": 0, entities: ["@google", "LLM", "Bard"], main_entity: "Bard"},
+            {"id": 1, entities: ["san francisco"], main_entity: "san francisco"},
+        ]
+
+        Extract entities from these tweets.
 
         [
         ` + "\n",
