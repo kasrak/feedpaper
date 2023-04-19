@@ -74,3 +74,23 @@ export function sqlDate(value: string): Date | null {
 export function sqlJson(value: string): any | null {
     return value ? JSON.parse(value) : null;
 }
+
+export const dbSchema = {
+    items: (row) => ({
+        id: row.id,
+        created_at: sqlDate(row.created_at),
+        content: sqlJson(row.content),
+        enrichment: sqlJson(row.enrichment),
+    }),
+    settings: (row) => ({
+        key: row.key,
+        value: sqlJson(row.value),
+    }),
+    enrichments: (row) => ({
+        id: row.id,
+        started_at: sqlDate(row.started_at),
+        updated_at: sqlDate(row.updated_at),
+        finished_at: sqlDate(row.finished_at),
+        result: sqlJson(row.result),
+    }),
+};

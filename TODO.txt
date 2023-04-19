@@ -1,8 +1,3 @@
-- run enrichment script automatically
-  - server endpoint to trigger the script manually
-  - log the runs in the db
-  - when saving tweets, if > 10 are unprocessed, run the script
-  - show log of runs in UI
 - bootstrap sqlite db schema and prepare for migrations (https://github.com/kriasoft/node-sqlite)
 - remember scroll position per day
 ===
@@ -19,6 +14,8 @@
 - use GPT to summarize clusters with 3+ tweets
 - pull in original tweet for replies & quotes, e.g. https://twitter.com/ntkris/status/1641585664654295041?s=20
 - dark mode
+- show total token use for past 30 days
+- button to manually trigger enrichment in debug mode
 
 - demo notes
     - first: 24-hour tape delay

@@ -1,7 +1,9 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import { sqlRun, sqlQuery, sqlJson, sqlDate } from "./db";
+import { sqlRun, sqlQuery, sqlJson, sqlDate, dbSchema } from "./db";
+import enrichItems from "./enrichItems";
+import getSettings from "./getSettings";
 
 const HOSTNAME = "0.0.0.0";
 const BACKEND_PORT = 2345;
@@ -41,20 +43,7 @@ export async function startServer() {
     });
 
     server.get("/api/getSettings", async (req, res) => {
-        const settingsRows = await sqlQuery(
-            `SELECT * FROM settings`,
-            [],
-            (row) => {
-                return {
-                    key: row.key,
-                    value: sqlJson(row.value),
-                };
-            },
-        );
-        const settings = {};
-        for (const row of settingsRows) {
-            settings[row.key] = row.value;
-        }
+        const settings = await getSettings();
         res.json({ settings });
     });
 
@@ -70,6 +59,8 @@ export async function startServer() {
             );
         }
         res.json({ ok: true });
+
+        enrichItems();
     });
 
     server.get("/api/getItems", async (req, res) => {
@@ -91,6 +82,11 @@ export async function startServer() {
             formatItem,
         );
         res.json({ item: items[0] });
+    });
+
+    server.post("/api/enrichItems", async (req, res) => {
+        res.json({ ok: true });
+        enrichItems();
     });
 
     if (!isDev) {
