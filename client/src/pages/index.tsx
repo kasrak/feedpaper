@@ -121,10 +121,12 @@ class Conversation {
             if (mainEntity) {
                 this.mainEntities.add(normalizeEntity(mainEntity));
             }
-            for (const entity of entities) {
-                const normalizedEntity = normalizeEntity(entity);
-                if (normalizedEntity !== "qt") {
-                    this.allEntities.add(normalizedEntity);
+            if (entities) {
+                for (const entity of entities) {
+                    const normalizedEntity = normalizeEntity(entity);
+                    if (normalizedEntity !== "qt") {
+                        this.allEntities.add(normalizedEntity);
+                    }
                 }
             }
         }

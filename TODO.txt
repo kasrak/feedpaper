@@ -1,4 +1,5 @@
 - switch over at midnight local time, rather than midnight utc
+- update prompt to focus less on poster's username
 - remember scroll position per day
 - don't pull focus when app runs scraping
 - click to expand media
