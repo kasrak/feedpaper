@@ -27,3 +27,15 @@ This is not intended to be a Twitter client, that would most likely be against T
 ## Development
 
 Instructions coming soon...
+
+## How it works
+
+The code is split into two parts:
+
+- `/app`: this is an Electron app which does the following:
+  - Every 30 minutes, loads Twitter and saves the tweets from the "For You" and "Following" tabs. See `app/src/main/main.ts`.
+  - The tweets are saved in a local SQLite database. See `app/src/main/db.ts`.
+  - If an OpenAI API key is set, it runs an enrichment process on each new tweet to extract entities and score its relevance. See `app/src/main/enrichItems.ts`.
+  - Provides access to the database via a server (http://localhost:2345), which the client (see below) uses. See `app/src/main/server.ts`.
+- `/client`: this is a Next.js frontend which is where the UI lives.
+  - In development, you can access it at http://localhost:2346
