@@ -20,6 +20,35 @@ const db = new (sqlite3.verbose().Database)(
     },
 );
 
+db.run(`
+CREATE TABLE IF NOT EXISTS "enrichments" (
+    "id" integer NOT NULL,
+    "started_at" datetime DEFAULT CURRENT_TIMESTAMP,
+    "finished_at" datetime,
+    "updated_at" datetime,
+    "result" text,
+    PRIMARY KEY (id)
+);
+`);
+
+db.run(`
+CREATE TABLE IF NOT EXISTS "items" (
+    "id" text NOT NULL,
+    "created_at" datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "content" text,
+    "enrichment" text,
+    PRIMARY KEY ("id")
+);
+`);
+
+db.run(`
+CREATE TABLE IF NOT EXISTS "settings" (
+    "key" text,
+    "value" text,
+    PRIMARY KEY (key)
+);
+`);
+
 type SqlValue = string | number | boolean | null;
 
 export function sqlRun(
