@@ -315,7 +315,10 @@ async function runEnrichment(enrichmentId: number): Promise<EnrichmentResult> {
             relevance: number;
         }>;
         try {
-            parsedResults = JSON.parse(completion.message!.content);
+            let content = completion.message!.content;
+            // if the json has a trailing comma, remove it
+            content = content.replace(/,\s*]$/, "");
+            parsedResults = JSON.parse(content);
             // TODO: validate with zod
             if (!Array.isArray(parsedResults)) {
                 throw new Error("not an array");
