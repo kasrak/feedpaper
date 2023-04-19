@@ -137,7 +137,11 @@ const tweetToString = function tweetToString(tweet) {
     let text = `@${tweet.user.screen_name}: ${tweet.full_text}`;
     if (tweet.entities) {
         for (const url of tweet.entities.urls || []) {
-            text = text.replace(url.url, url.expanded_url);
+            // links seem to not be very useful for entity extraction
+            text = text.replace(url.url, "");
+        }
+        for (const url of tweet.entities.media || []) {
+            text = text.replace(url.url, "");
         }
     }
 
@@ -152,7 +156,7 @@ const tweetToString = function tweetToString(tweet) {
         const values = tweet.card.legacy.binding_values;
         const title = getValue(values, "title");
         const description = getValue(values, "description");
-        text += ` ${title} ${description}`;
+        text += ` ${title}: ${description}`;
     }
 
     // emojis seem to hurt entity extraction
@@ -230,9 +234,10 @@ async function runEnrichment(enrichmentId: number): Promise<EnrichmentResult> {
     const items = await getItemsToEnrich();
 
     const itemIdByShortId = new Map();
+    const fewShotExamples = 2;
     let itemsForPrompt: Array<string> = [];
     for (const tweet of items) {
-        const shortId = itemsForPrompt.length;
+        const shortId = itemsForPrompt.length + fewShotExamples;
         itemIdByShortId.set(shortId, tweet.id);
         const tweetString = tweetToString(tweet.content);
         itemsForPrompt.push(JSON.stringify({ id: shortId, text: tweetString }));
@@ -246,14 +251,14 @@ async function runEnrichment(enrichmentId: number): Promise<EnrichmentResult> {
 
         Only extract @handles when relevant to the topic of the tweet. Example:
         [
-            {"id": 0, text: "@google: we're excited to announce our latest LLM model: Bard"},
-            {"id": 1, text: "@bobsmith: san francisco housing rules impose onerous restrictions"},
+            {"id":0,"text":"@google: we're excited to announce our latest LLM model: Bard"},
+            {"id":1,"text":"@bobsmith: san francisco housing rules impose onerous restrictions"},
         ]
 
         JSON reponse:
         [
-            {"id": 0, entities: ["@google", "LLM", "Bard"], main_entity: "Bard"},
-            {"id": 1, entities: ["san francisco"], main_entity: "san francisco"},
+            {"id":0,"entities":["@google", "LLM", "Bard"],"main_entity":"Bard"},
+            {"id":1,"entities":["san francisco"],"main_entity":"san francisco"},
         ]
 
         Extract entities from these tweets.

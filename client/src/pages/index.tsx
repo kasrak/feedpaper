@@ -426,9 +426,6 @@ function getConversations(items: Array<ConversationItem>) {
         if (conversation.getFollowedSources().size > 0) {
             return true;
         }
-        if (conversation.getUpvotes() > 1000) {
-            return true;
-        }
         hiddenConversations.push(conversation);
         return false;
     });
