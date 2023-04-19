@@ -6,9 +6,9 @@ it's also noisy and addictive.
 
 How Feedpaper improves the experience:
 
-1. By default, it only shows you Tweets from yesterday. This is biggest improvement for me. I can just check it once a day, and there's no incentive to check multiple times because the list won't change until tomorrow.
-2. It groups related Tweets and conversations so they're next to each other in the feed. This makes it easier to read, since there's less context switching and lets you quickly skip ahead if a topic isn't interesting.
-3. Downranks and filters out low relevance and low quality Tweets based on your interests.
+1. By default, it only shows you Tweets from yesterday. This is biggest improvement for me. I can just check it once a day, and there's no incentive to check more often because the list won't change until tomorrow.
+2. It groups related Tweets and conversations so they're next to each other in the feed. This makes it easier to read: there's less context switching and you can quickly skip ahead if a topic isn't interesting.
+3. Downranks and filters out low relevance and low quality Tweets based on your interests using GPT.
 
 #### Demo
 [
