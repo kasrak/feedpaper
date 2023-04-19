@@ -1,3 +1,4 @@
+- switch over at midnight local time, rather than midnight utc
 - remember scroll position per day
 - don't pull focus when app runs scraping
 - click to expand media
