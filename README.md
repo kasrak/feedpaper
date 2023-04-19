@@ -50,6 +50,8 @@ You can see the feed by clicking on the "Feedpaper" tab, or going to http://loca
 
 If you're seeing a 404 page, try restarting the ./dev.sh script.
 
+To enable better grouping of conversations and relevance filtering, click the gear icon and enter your OpenAI API key.
+
 ## How it works
 
 The code is split into two parts:
