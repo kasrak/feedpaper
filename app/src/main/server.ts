@@ -63,13 +63,19 @@ export async function startServer() {
         enrichItems();
     });
 
+    function jsDateToSqlite(date: Date): string {
+        return date.toISOString().replace("T", " ").replace("Z", "");
+    }
+
     server.get("/api/getItems", async (req, res) => {
+        const start = jsDateToSqlite(new Date(req.query["start"] as string));
+        const end = jsDateToSqlite(new Date(req.query["end"] as string));
         const items = await sqlQuery(
             `SELECT * FROM items
                     WHERE created_at > $1 AND created_at < $2
                     AND content->'is_promoted' = 'false'
                     ORDER BY created_at, id ASC`,
-            [req.query["start"] as string, req.query["end"] as string],
+            [start, end],
             formatItem,
         );
         res.json({ items });

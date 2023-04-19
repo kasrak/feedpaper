@@ -466,10 +466,15 @@ function getConversations(items: Array<ConversationItem>) {
 ////////////////////////////////////////////////////////////////////////////////
 
 async function getItems(date: Date) {
-    const start = toIsoDate(new Date(date.getTime() - 24 * 60 * 60 * 1000));
-    const end = toIsoDate(date);
+    const start = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate() - 1,
+    );
+    const end = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
     const res = await fetch(
-        `${BASE_URL}/api/getItems?start=${start}&end=${end}`,
+        `${BASE_URL}/api/getItems?start=${start.toISOString()}&end=${end.toISOString()}`,
     );
     return res.json();
 }
@@ -699,7 +704,7 @@ export default function Home() {
     function setDate(date: Date) {
         setDateIso(toIsoDate(date));
     }
-    const date = new Date(dateIso + "T00:00:00");
+    const date = new Date(dateIso + "T00:00");
 
     const itemsQuery = useQuery({
         queryKey: ["items", dateIso],
