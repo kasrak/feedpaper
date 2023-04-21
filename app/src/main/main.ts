@@ -175,9 +175,14 @@ async function createWindow() {
         }
         mainWindow.webContents.send("selected-tab-changed", arg);
     };
+    const openInBrowser = () => {
+        shell.openExternal(FRONTEND_BASE_URL);
+    };
     ipcMain.on("set-tab", setTab);
+    ipcMain.on("open-in-browser", openInBrowser);
     mainWindow.on("close", () => {
         ipcMain.off("set-tab", setTab);
+        ipcMain.off("open-in-browser", openInBrowser);
     });
 
     while (true) {
