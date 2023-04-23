@@ -1,3 +1,9 @@
+- bug: "round-up" tweet threads end up causing it to over-merge conversations. e.g.
+    - a = tweet about product A launching
+    - b = tweet about product B launching
+    - [c, d] = a thread that links to a & b respectively
+    - in this case, we don't want all of [a, b, c, d] to be in one conversation.
+      there are actually two separate conversations (a, c), (b, d)...
 - remember scroll position per day
 - don't pull focus when app runs scraping
 - click to expand media
