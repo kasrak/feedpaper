@@ -12,13 +12,12 @@ function hash(str: string) {
 }
 
 export function cached<T extends (...args: any[]) => any>(func: T) {
-    if (!func.name) {
-        throw new Error(
-            "anonymous function can't be cached, add a name to the function",
-        );
+    let funcName = func.name;
+    if (!funcName) {
+        funcName = new Error().stack.split("\n")[2].trim().split(" ")[1];
     }
     return async (...args: Parameters<T>): Promise<ReturnType<T>> => {
-        const cacheKey = `${func.name}_${hash(
+        const cacheKey = `${funcName}_${hash(
             JSON.stringify([func.toString(), args]),
         )}`;
         const cacheFilePath = path.join(os.tmpdir(), `${cacheKey}.json`);

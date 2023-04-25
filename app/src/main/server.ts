@@ -4,13 +4,13 @@ import path from "path";
 import { sqlRun, sqlQuery, sqlJson, sqlDate, dbSchema } from "./db";
 import enrichItems from "./enrichItems";
 import getSettings from "./getSettings";
+import { is } from "electron-util";
 
 const HOSTNAME = "0.0.0.0";
 const BACKEND_PORT = 2345;
 export const BACKEND_BASE_URL = `http://${HOSTNAME}:${BACKEND_PORT}`;
 
-const isDev = process.env.NODE_ENV === "development";
-export const FRONTEND_BASE_URL = isDev
+export const FRONTEND_BASE_URL = is.development
     ? `http://localhost:2346`
     : BACKEND_BASE_URL;
 
@@ -95,7 +95,7 @@ export async function startServer() {
         enrichItems();
     });
 
-    if (!isDev) {
+    if (!is.development) {
         // In dist build, serve static files from ../client
         const staticDir = path.join(__dirname, "..", "client");
         console.log(`Serving static files from ${staticDir}`);
